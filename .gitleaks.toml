@@ -1,0 +1,12 @@
+# Gitleaks Configuration
+# No ignora los archivos de test para que detecte los secrets intencionados
+
+title = "TaskManager Gitleaks Config"
+
+[extend]
+useDefault = true
+
+# No paths to ignore - queremos detectar todo
+[allowlist]
+  paths = []
+  commits = []
