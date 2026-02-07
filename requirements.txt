@@ -1,0 +1,50 @@
+# TaskManager Dependencies
+# VULN: Versiones antiguas con CVEs conocidos para testing de Trivy SCA
+
+# Framework principal - CVE-2023-30861 (Cookie vulnerability)
+Flask==1.0.0
+
+# Template engine - CVE-2019-10906 (Sandbox escape)
+Jinja2==2.10
+
+# YAML parsing - CVE-2020-14343 (Arbitrary code execution)
+PyYAML==5.1
+
+# HTTP library - CVE-2018-18074 (Redirect vulnerability)  
+requests==2.20.0
+
+# SQL toolkit - CVE-2019-7164 (SQL injection)
+SQLAlchemy==1.2.0
+
+# JWT handling - No specific CVE but old version
+PyJWT==1.7.0
+
+# Password hashing - OK (latest)
+bcrypt==4.0.1
+
+# Redis client
+redis==3.5.0
+
+# AWS SDK - CVE-2022-25168
+boto3==1.17.0
+
+# Image processing - CVE-2022-22817 (RCE)
+Pillow==8.0.0
+
+# XML parsing - CVE-2020-28463 (XXE)
+lxml==4.5.0
+
+# Markdown - CVE-2020-25626 (XSS)
+python-markdown-math==0.6
+
+# Paramiko - CVE-2022-24302
+paramiko==2.7.0
+
+# Cryptography - CVE-2020-36242
+cryptography==3.2
+
+# Gunicorn for production
+gunicorn==20.0.4
+
+# Environment variables
+python-dotenv==0.19.0

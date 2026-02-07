@@ -1,0 +1,76 @@
+# Docker Compose for local development
+# VULN: Configuraciones inseguras para testing de Checkov
+
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: taskmanager-web
+    ports:
+      - "5000:5000"
+      - "22:22"  # VULN: SSH expuesto
+    environment:
+      # VULN: Secrets en texto plano (CKV_DOCKER_COMPOSE_xxx)
+      - DATABASE_URL=postgresql://admin:SuperSecretPass123@db:5432/taskmanager
+      - SECRET_KEY=super-secret-key-change-me
+      - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+      - AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - DEBUG=true
+    volumes:
+      - .:/app
+      # VULN: Docker socket montado (permite escape del container)
+      - /var/run/docker.sock:/var/run/docker.sock
+    # VULN: privileged mode
+    privileged: true
+    # VULN: Sin health check
+    depends_on:
+      - db
+      - redis
+    networks:
+      - taskmanager-net
+    # VULN: Sin resource limits (memory, cpu)
+    # VULN: Sin read_only filesystem
+
+  db:
+    image: postgres:13
+    container_name: taskmanager-db
+    environment:
+      # VULN: Credenciales hardcodeadas
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: SuperSecretPass123
+      POSTGRES_DB: taskmanager
+    ports:
+      # VULN: DB expuesta al host
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - taskmanager-net
+    # VULN: Sin health check
+
+  redis:
+    image: redis:6-alpine
+    container_name: taskmanager-redis
+    command: redis-server --requirepass RedisP@ss123
+    ports:
+      # VULN: Redis expuesto
+      - "6379:6379"
+    networks:
+      - taskmanager-net
+
+  # VULN: Service de debug en producción
+  adminer:
+    image: adminer
+    container_name: taskmanager-adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - taskmanager-net
+
+volumes:
+  postgres_data:
+
+networks:
+  taskmanager-net:
+    driver: bridge
