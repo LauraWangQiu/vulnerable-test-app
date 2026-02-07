@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Details - TaskManager</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Task Details</h1>
+            <nav>
+                <a href="/tasks">All Tasks</a>
+                <a href="/logout">Logout</a>
+            </nav>
+        </header>
+        
+        <main>
+            <div id="task-container">
+                <!-- Task content loads here -->
+            </div>
+            
+            <div id="comments-section">
+                <h3>Comments</h3>
+                <div id="comments-list"></div>
+                
+                <form id="comment-form">
+                    <textarea id="comment-input" placeholder="Add a comment..."></textarea>
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        </main>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script>
+        // VULN: XSS - innerHTML con contenido sin sanitizar (Semgrep: xss)
+        function loadTask(taskId) {
+            fetch(`/api/tasks/${taskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // VULN: XSS - inyección directa de HTML
+                    document.getElementById('task-container').innerHTML = `
+                        <h2>${data.title}</h2>
+                        <p>${data.description}</p>
+                        <div class="task-meta">
+                            Created by: ${data.created_by}
+                        </div>
+                    `;
+                });
+        }
+        
+        // VULN: XSS - jQuery html() con input de usuario
+        function loadComments(taskId) {
+            fetch(`/api/tasks/${taskId}/comments`)
+                .then(response => response.json())
+                .then(data => {
+                    data.comments.forEach(comment => {
+                        // VULN: XSS vía jQuery .html()
+                        $('#comments-list').append(`
+                            <div class="comment">
+                                <strong>${comment.author}</strong>: ${comment.text}
+                            </div>
+                        `);
+                    });
+                });
+        }
+        
+        // VULN: eval() con input de usuario
+        function applyFilter(filterStr) {
+            // VULN: eval peligroso
+            return eval(filterStr);
+        }
+        
+        // VULN: Token en URL visible
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('id');
+        const authToken = urlParams.get('token');  // VULN: Token en URL
+        
+        if (taskId) {
+            loadTask(taskId);
+            loadComments(taskId);
+        }
+        
+        // VULN: Información sensible en console.log
+        console.log('Auth token:', authToken);
+        console.log('API Key:', 'sk_live_xxxxxxxxxxxx');
+    </script>
+</body>
+</html>
