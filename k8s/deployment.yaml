@@ -1,0 +1,110 @@
+# Kubernetes Deployment for TaskManager
+# VULN: Múltiples misconfiguraciones para testing de Checkov
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskmanager
+  namespace: default
+  labels:
+    app: taskmanager
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: taskmanager
+  template:
+    metadata:
+      labels:
+        app: taskmanager
+    spec:
+      # VULN: Sin serviceAccountName específico (CKV_K8S_41)
+      
+      containers:
+      - name: taskmanager
+        image: taskmanager:latest
+        # VULN: Tag 'latest' no es reproducible (CKV_K8S_14)
+        
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        
+        # VULN: Sin resources definidos (CKV_K8S_11, CKV_K8S_12, CKV_K8S_13)
+        # Debería tener:
+        # resources:
+        #   limits:
+        #     cpu: "500m"
+        #     memory: "128Mi"
+        #   requests:
+        #     cpu: "250m"
+        #     memory: "64Mi"
+        
+        securityContext:
+          # VULN: Container privilegiado (CKV_K8S_1)
+          privileged: true  # VULN: Debería ser false
+          
+          # VULN: Se ejecuta como root (CKV_K8S_6)
+          runAsUser: 0  # VULN: No debería ser 0 (root)
+          runAsNonRoot: false  # VULN: Debería ser true
+          
+          # VULN: Permite escalada de privilegios (CKV_K8S_20)
+          allowPrivilegeEscalation: true  # VULN: Debería ser false
+          
+          # VULN: Filesystem escribible (CKV_K8S_22)
+          readOnlyRootFilesystem: false  # VULN: Debería ser true
+          
+          # VULN: Capabilities peligrosas (CKV_K8S_25)
+          capabilities:
+            add:
+              - NET_ADMIN
+              - SYS_ADMIN  # VULN: Muy peligroso
+              - SYS_PTRACE
+        
+        env:
+        # VULN: Secrets en variables de entorno planas (CKV_K8S_35)
+        - name: DATABASE_PASSWORD
+          value: "SuperSecretPass123"  # VULN: Debería usar secretRef
+        - name: API_KEY
+          value: "sk_live_xxxxxxxxxxxx"  # VULN: Hardcoded secret
+        - name: JWT_SECRET
+          value: "my-jwt-secret-key"
+        
+        # Sin health checks (CKV_K8S_8, CKV_K8S_9)
+        # livenessProbe: ...
+        # readinessProbe: ...
+        
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        # VULN: Montaje de Docker socket (CKV_K8S_27)
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      
+      volumes:
+      - name: data
+        hostPath:
+          path: /data/taskmanager
+          # VULN: hostPath (CKV_K8S_26)
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+          # VULN: Docker socket montado (CKV_K8S_27)
+      
+      # VULN: Sin network policy (CKV_K8S_4)
+      # VULN: Sin pod security policy
+      
+      hostNetwork: true  # VULN: Host network (CKV_K8S_19)
+      hostPID: true      # VULN: Host PID namespace (CKV_K8S_17)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskmanager-service
+  namespace: default
+spec:
+  type: LoadBalancer  # Expone externamente
+  selector:
+    app: taskmanager
+  ports:
+  - port: 80
+    targetPort: 5000
+    protocol: TCP
