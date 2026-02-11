@@ -10,13 +10,16 @@ Jinja2==2.10
 # YAML parsing - CVE-2020-14343 (Arbitrary code execution)
 PyYAML==5.1
 
-# HTTP library - CVE-2018-18074 (Redirect vulnerability)  
-requests==2.20.0
+# HTTP library - CVE-2018-18074 (Redirect vulnerability)
+# NOTE: Version pin relaxed to avoid conflict with boto3/botocore for SCA testing
+requests>=2.20.0,<2.29.0
+# Allow compatible urllib3 for boto3/botocore
+urllib3>=1.25,<1.27
 
 # SQL toolkit - CVE-2019-7164 (SQL injection)
 SQLAlchemy==1.2.0
 
-# JWT handling - No specific CVE but old version
+## JWT handling - CVE-2022-29217
 PyJWT==1.7.0
 
 # Password hashing - OK (latest)
@@ -43,7 +46,7 @@ paramiko==2.7.0
 # Cryptography - CVE-2020-36242
 cryptography==3.2
 
-# Gunicorn for production
+# Gunicorn - CVE-2024-6827
 gunicorn==20.0.4
 
 # Environment variables

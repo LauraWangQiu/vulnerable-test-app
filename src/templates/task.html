@@ -35,12 +35,12 @@
     
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script>
-        // VULN: XSS - innerHTML con contenido sin sanitizar (Semgrep: xss)
+        // VULN: XSS - innerHTML with unsanitized content (Semgrep: xss)
         function loadTask(taskId) {
             fetch(`/api/tasks/${taskId}`)
                 .then(response => response.json())
                 .then(data => {
-                    // VULN: XSS - inyección directa de HTML
+                    // VULN: XSS - direct HTML injection
                     document.getElementById('task-container').innerHTML = `
                         <h2>${data.title}</h2>
                         <p>${data.description}</p>
@@ -57,7 +57,7 @@
                 .then(response => response.json())
                 .then(data => {
                     data.comments.forEach(comment => {
-                        // VULN: XSS vía jQuery .html()
+                        // VULN: XSS via jQuery .html()
                         $('#comments-list').append(`
                             <div class="comment">
                                 <strong>${comment.author}</strong>: ${comment.text}
@@ -67,23 +67,23 @@
                 });
         }
         
-        // VULN: eval() con input de usuario
+        // VULN: eval() with user input
         function applyFilter(filterStr) {
-            // VULN: eval peligroso
+            // VULN: dangerous eval
             return eval(filterStr);
         }
         
-        // VULN: Token en URL visible
+        // VULN: Token visible in URL
         const urlParams = new URLSearchParams(window.location.search);
         const taskId = urlParams.get('id');
-        const authToken = urlParams.get('token');  // VULN: Token en URL
+        const authToken = urlParams.get('token');  // VULN: Token in URL
         
         if (taskId) {
             loadTask(taskId);
             loadComments(taskId);
         }
         
-        // VULN: Información sensible en console.log
+        // VULN: Sensitive information in console.log
         console.log('Auth token:', authToken);
         console.log('API Key:', 'sk_live_xxxxxxxxxxxx');
     </script>

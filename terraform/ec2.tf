@@ -1,22 +1,22 @@
 # EC2 and Security Groups Configuration
-# VULN: Security Groups abiertos para testing de Checkov
+# VULN: Open Security Groups for Checkov testing
 
-# VULN: Security Group permite todo el tráfico entrante (CKV_AWS_24, CKV_AWS_25)
+# VULN: Security Group allows all incoming traffic (CKV_AWS_24, CKV_AWS_25)
 resource "aws_security_group" "web" {
   name        = "taskmanager-web-sg"
   description = "Security group for web servers"
   vpc_id      = aws_vpc.main.id
   
-  # VULN: SSH abierto al mundo (CKV_AWS_24)
+  # VULN: SSH open to the world (CKV_AWS_24)
   ingress {
     description = "SSH from anywhere"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # VULN: Debería ser IP específica
+    cidr_blocks = ["0.0.0.0/0"]  # VULN: Should be a specific IP
   }
   
-  # VULN: HTTP abierto (podría ser OK pero sin HTTPS)
+  # VULN: HTTP open (could be OK but without HTTPS)
   ingress {
     description = "HTTP"
     from_port   = 80
@@ -25,16 +25,16 @@ resource "aws_security_group" "web" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   
-  # VULN: Puerto de DB expuesto (CKV_AWS_23)
+  # VULN: Exposed DB port (CKV_AWS_23)
   ingress {
     description = "PostgreSQL"
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # VULN: DB accesible desde internet
+    cidr_blocks = ["0.0.0.0/0"]  # VULN: DB accessible from the internet
   }
   
-  # VULN: Egress totalmente abierto
+  # VULN: Totally open egress
   egress {
     from_port   = 0
     to_port     = 0
@@ -47,8 +47,8 @@ resource "aws_security_group" "web" {
   }
 }
 
-# VULN: EC2 sin rol IAM apropiado
-# VULN: Sin IMDSv2 (CKV_AWS_79)
+# VULN: EC2 without proper IAM role
+# VULN: No IMDSv2 (CKV_AWS_79)
 resource "aws_instance" "web" {
   ami           = "ami-0abcdef1234567890"
   instance_type = "t3.medium"
@@ -57,20 +57,20 @@ resource "aws_instance" "web" {
   vpc_security_group_ids      = [aws_security_group.web.id]
   associate_public_ip_address = true
   
-  # VULN: Sin metadata_options para IMDSv2 (CKV_AWS_79)
-  # Debería tener:
+  # VULN: No metadata_options for IMDSv2 (CKV_AWS_79)
+  # Should have:
   # metadata_options {
   #   http_tokens = "required"
   # }
   
-  # VULN: Sin EBS encryption (CKV_AWS_3)
+  # VULN: No EBS encryption (CKV_AWS_3)
   root_block_device {
     volume_type = "gp2"
     volume_size = 20
-    encrypted   = false  # VULN: Debería ser true
+    encrypted   = false  # VULN: Should be true
   }
   
-  # VULN: User data con secrets (CKV_AWS_46)
+  # VULN: User data with secrets (CKV_AWS_46)
   user_data = <<-EOF
     #!/bin/bash
     export DB_PASSWORD="SuperSecretPass123"
@@ -83,7 +83,7 @@ resource "aws_instance" "web" {
   }
 }
 
-# VPC básica
+# Basic VPC
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true

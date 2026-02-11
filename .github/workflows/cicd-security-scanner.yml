@@ -1,0 +1,197 @@
+name: Security Pipeline
+
+on:
+  # Manual trigger — select which scanners to run
+  workflow_dispatch:
+    inputs:
+      scan_secrets:
+        description: 'Run Secrets scan'
+        required: false
+        default: true
+        type: boolean
+      secrets_mode:
+        description: 'Secret scan mode (only if scan_secrets is true)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all       # Both files and history
+          - files     # Current files only
+          - history   # Git commit history only
+      scan_sast:
+        description: 'Run SAST scan'
+        required: false
+        default: true
+        type: boolean
+      scan_sca:
+        description: 'Run SCA scan'
+        required: false
+        default: true
+        type: boolean
+      scan_iac:
+        description: 'Run IaC scan'
+        required: false
+        default: true
+        type: boolean
+      scan_containers:
+        description: 'Run Container scan'
+        required: false
+        default: true
+        type: boolean
+
+  # Automatic on PRs to main
+  pull_request:
+    branches: [main]
+
+# ──────────────────────────────────────────────
+#  MANUAL / PR: Secrets
+# ──────────────────────────────────────────────
+jobs:
+  secrets-full-scan-files:
+    name: 🔐 Secrets – Full Repo (files)
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.scan_secrets == true &&
+      (inputs.secrets_mode == 'all' || inputs.secrets_mode == 'files')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: LauraWangQiu/cicd-security-scanner/secrets@main
+        with:
+          scan_mode: 'files'
+
+  secrets-full-scan-history:
+    name: 🔐 Secrets – Full Repo (history)
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.scan_secrets == true &&
+      (inputs.secrets_mode == 'all' || inputs.secrets_mode == 'history')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: LauraWangQiu/cicd-security-scanner/secrets@main
+        with:
+          scan_mode: 'history'
+
+  secrets-pr-scan:
+    name: 🔐 Secrets – PR Diff
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: LauraWangQiu/cicd-security-scanner/secrets@main
+        with:
+          scan_mode: 'pr'
+          base_ref: ${{ github.base_ref }}
+
+  # ──────────────────────────────────────────────
+  #  MANUAL / PR: SAST
+  # ──────────────────────────────────────────────
+  sast-scan:
+    name: 🔍 SAST – Static Code Analysis
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.scan_sast == true) ||
+      github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: LauraWangQiu/cicd-security-scanner/sast@main
+        with:
+          config: 'auto'
+          fail_on_findings: 'true'
+
+  # ──────────────────────────────────────────────
+  #  MANUAL / PR: SCA
+  # ──────────────────────────────────────────────
+  sca-scan:
+    name: 📦 SCA – Dependency Scan
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.scan_sca == true) ||
+      github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Detect changed dependency files (PR only)
+        id: dep_changes
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'requirements*.txt' 'Pipfile*' 'poetry.lock' 'pyproject.toml' \
+            'package.json' 'package-lock.json' 'yarn.lock' 'pnpm-lock.yaml' \
+            'go.sum' 'go.mod' 'Gemfile.lock' 'Cargo.lock' 'composer.lock' \
+            '*.csproj' '*.sln' || true)
+          if [ -n "$CHANGED" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📦 Dependency files changed:"
+            echo "$CHANGED"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No dependency files changed in this PR — skipping SCA"
+          fi
+
+      - name: Run SCA scanning
+        if: >-
+          github.event_name == 'workflow_dispatch' ||
+          steps.dep_changes.outputs.changed == 'true'
+        uses: LauraWangQiu/cicd-security-scanner/sca@main
+        with:
+          severity: 'HIGH,CRITICAL'
+          fail_on_vulnerabilities: 'true'
+
+  # ──────────────────────────────────────────────
+  #  MANUAL / PR: IaC
+  # ──────────────────────────────────────────────
+  iac-scan:
+    name: 🏗️ IaC – Infrastructure as Code
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.scan_iac == true) ||
+      github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: LauraWangQiu/cicd-security-scanner/iac@main
+        with:
+          framework: 'all'
+          fail_on_findings: 'true'
+
+  # ──────────────────────────────────────────────
+  #  MANUAL / PR: Container
+  # ──────────────────────────────────────────────
+  container-scan:
+    name: 🐳 Container – Dockerfile Scan
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.scan_containers == true) ||
+      github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: LauraWangQiu/cicd-security-scanner/containers@main
+        with:
+          severity: 'HIGH,CRITICAL'
+          fail_on_vulnerabilities: 'true'
+
+  # ──────────────────────────────────────────────
+  #  Security Gate — all selected scans must pass
+  # ──────────────────────────────────────────────
+  security-gate:
+    name: 🚦 Security Gate
+    if: always()
+    needs: [secrets-full-scan-files, secrets-full-scan-history, secrets-pr-scan, sca-scan, sast-scan, iac-scan, container-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all scans passed
+        run: |
+          FAILED=false
+          for result in \
+            "${{ needs.secrets-full-scan-files.result }}" \
+            "${{ needs.secrets-full-scan-history.result }}" \
+            "${{ needs.secrets-pr-scan.result }}" \
+            "${{ needs.sca-scan.result }}" \
+            "${{ needs.sast-scan.result }}" \
+            "${{ needs.iac-scan.result }}" \
+            "${{ needs.container-scan.result }}"; do
+            # Only count "failure" — skip "skipped" jobs (not selected or not triggered)
+            if [ "$result" == "failure" ]; then FAILED=true; fi
+          done
+          if [ "$FAILED" == "true" ]; then
+            echo "❌ Security gate failed — fix vulnerabilities before merging"
+            exit 1
+          fi
+          echo "✅ All security checks passed"

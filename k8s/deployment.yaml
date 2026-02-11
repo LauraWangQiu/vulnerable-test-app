@@ -1,5 +1,5 @@
 # Kubernetes Deployment for TaskManager
-# VULN: Múltiples misconfiguraciones para testing de Checkov
+# VULN: Multiple misconfigurations for Checkov testing
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,19 +17,19 @@ spec:
       labels:
         app: taskmanager
     spec:
-      # VULN: Sin serviceAccountName específico (CKV_K8S_41)
+      # VULN: No specific serviceAccountName (CKV_K8S_41)
       
       containers:
       - name: taskmanager
         image: taskmanager:latest
-        # VULN: Tag 'latest' no es reproducible (CKV_K8S_14)
+        # VULN: Tag 'latest' is not reproducible (CKV_K8S_14)
         
         ports:
         - containerPort: 5000
           protocol: TCP
         
-        # VULN: Sin resources definidos (CKV_K8S_11, CKV_K8S_12, CKV_K8S_13)
-        # Debería tener:
+        # VULN: No resources defined (CKV_K8S_11, CKV_K8S_12, CKV_K8S_13)
+        # Should have:
         # resources:
         #   limits:
         #     cpu: "500m"
@@ -39,30 +39,30 @@ spec:
         #     memory: "64Mi"
         
         securityContext:
-          # VULN: Container privilegiado (CKV_K8S_1)
-          privileged: true  # VULN: Debería ser false
+          # VULN: Privileged container (CKV_K8S_1)
+          privileged: true  # VULN: Should be false
           
-          # VULN: Se ejecuta como root (CKV_K8S_6)
-          runAsUser: 0  # VULN: No debería ser 0 (root)
-          runAsNonRoot: false  # VULN: Debería ser true
+          # VULN: Runs as root (CKV_K8S_6)
+          runAsUser: 0  # VULN: Should not be 0 (root)
+          runAsNonRoot: false  # VULN: Should be true
           
-          # VULN: Permite escalada de privilegios (CKV_K8S_20)
-          allowPrivilegeEscalation: true  # VULN: Debería ser false
+          # VULN: Allows privilege escalation (CKV_K8S_20)
+          allowPrivilegeEscalation: true  # VULN: Should be false
           
-          # VULN: Filesystem escribible (CKV_K8S_22)
-          readOnlyRootFilesystem: false  # VULN: Debería ser true
+          # VULN: Writable filesystem (CKV_K8S_22)
+          readOnlyRootFilesystem: false  # VULN: Should be true
           
-          # VULN: Capabilities peligrosas (CKV_K8S_25)
+          # VULN: Dangerous capabilities (CKV_K8S_25)
           capabilities:
             add:
               - NET_ADMIN
-              - SYS_ADMIN  # VULN: Muy peligroso
+              - SYS_ADMIN  # VULN: Very dangerous
               - SYS_PTRACE
         
         env:
-        # VULN: Secrets en variables de entorno planas (CKV_K8S_35)
+        # VULN: Secrets in plain environment variables (CKV_K8S_35)
         - name: DATABASE_PASSWORD
-          value: "SuperSecretPass123"  # VULN: Debería usar secretRef
+          value: "SuperSecretPass123"  # VULN: Should use secretRef
         - name: API_KEY
           value: "sk_live_xxxxxxxxxxxx"  # VULN: Hardcoded secret
         - name: JWT_SECRET
@@ -75,7 +75,7 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /app/data
-        # VULN: Montaje de Docker socket (CKV_K8S_27)
+        # VULN: Docker socket mount (CKV_K8S_27)
         - name: docker-sock
           mountPath: /var/run/docker.sock
       
@@ -87,10 +87,10 @@ spec:
       - name: docker-sock
         hostPath:
           path: /var/run/docker.sock
-          # VULN: Docker socket montado (CKV_K8S_27)
+          # VULN: Docker socket mounted (CKV_K8S_27)
       
-      # VULN: Sin network policy (CKV_K8S_4)
-      # VULN: Sin pod security policy
+      # VULN: No network policy (CKV_K8S_4)
+      # VULN: No pod security policy
       
       hostNetwork: true  # VULN: Host network (CKV_K8S_19)
       hostPID: true      # VULN: Host PID namespace (CKV_K8S_17)
@@ -101,7 +101,7 @@ metadata:
   name: taskmanager-service
   namespace: default
 spec:
-  type: LoadBalancer  # Expone externamente
+  type: LoadBalancer  # Exposed externally
   selector:
     app: taskmanager
   ports:

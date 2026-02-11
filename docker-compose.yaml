@@ -1,5 +1,5 @@
 # Docker Compose for local development
-# VULN: Configuraciones inseguras para testing de Checkov
+# VULN: Insecure configurations for Checkov testing
 
 version: '3.8'
 
@@ -9,57 +9,57 @@ services:
     container_name: taskmanager-web
     ports:
       - "5000:5000"
-      - "22:22"  # VULN: SSH expuesto
+      - "22:22"  # VULN: SSH exposed
     environment:
-      # VULN: Secrets en texto plano (CKV_DOCKER_COMPOSE_xxx)
+      # VULN: Secrets in plain text (CKV_DOCKER_COMPOSE_xxx)
       - DATABASE_URL=postgresql://admin:SuperSecretPass123@db:5432/taskmanager
       - SECRET_KEY=super-secret-key-change-me
-      - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-      - AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - AWS_ACCESS_KEY_ID=AKIA5BASP7JHE3IHXA7R
+      - AWS_SECRET_ACCESS_KEY=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
       - DEBUG=true
     volumes:
       - .:/app
-      # VULN: Docker socket montado (permite escape del container)
+      # VULN: Docker socket mounted (allows container escape)
       - /var/run/docker.sock:/var/run/docker.sock
     # VULN: privileged mode
     privileged: true
-    # VULN: Sin health check
+    # VULN: No health check
     depends_on:
       - db
       - redis
     networks:
       - taskmanager-net
-    # VULN: Sin resource limits (memory, cpu)
-    # VULN: Sin read_only filesystem
+    # VULN: No resource limits (memory, cpu)
+    # VULN: No read_only filesystem
 
   db:
     image: postgres:13
     container_name: taskmanager-db
     environment:
-      # VULN: Credenciales hardcodeadas
+      # VULN: Hardcoded credentials
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: SuperSecretPass123
       POSTGRES_DB: taskmanager
     ports:
-      # VULN: DB expuesta al host
+      # VULN: DB exposed to host
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - taskmanager-net
-    # VULN: Sin health check
+    # VULN: No health check
 
   redis:
     image: redis:6-alpine
     container_name: taskmanager-redis
     command: redis-server --requirepass RedisP@ss123
     ports:
-      # VULN: Redis expuesto
+      # VULN: Redis exposed
       - "6379:6379"
     networks:
       - taskmanager-net
 
-  # VULN: Service de debug en producción
+  # VULN: Debug service in production
   adminer:
     image: adminer
     container_name: taskmanager-adminer

@@ -5,16 +5,16 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# VULN: SMTP credentials hardcodeadas (Gitleaks)
+ # VULN: Hardcoded SMTP credentials (Gitleaks)
 SMTP_CONFIG = {
     "server": "smtp.gmail.com",
     "port": 587,
     "username": "taskmanager.app@gmail.com",
-    "password": "xmtp-app-password-12345"  # VULN: Hardcoded SMTP password
+    "password": "AbcdEfghIjklMnop1234"  # VULN: Hardcoded password
 }
 
-# VULN: SendGrid API key
-SENDGRID_KEY = "SG.xxxxxx-xxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ # VULN: SendGrid API key
+SENDGRID_KEY = "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"
 
 
 def send_email(to_email, subject, body):
@@ -29,7 +29,7 @@ def send_email(to_email, subject, body):
     try:
         server = smtplib.SMTP(SMTP_CONFIG['server'], SMTP_CONFIG['port'])
         server.starttls()
-        # VULN: Usando credenciales hardcodeadas
+        # VULN: Using hardcoded credentials
         server.login(SMTP_CONFIG['username'], SMTP_CONFIG['password'])
         server.send_message(msg)
         server.quit()
@@ -41,7 +41,7 @@ def send_email(to_email, subject, body):
 
 def send_password_reset(email, reset_token):
     """Send password reset email"""
-    # VULN: Token expuesto en URL sin cifrar
+    # VULN: Token exposed in URL without encryption
     reset_link = f"https://taskmanager.com/reset?token={reset_token}&email={email}"
     
     body = f"""
@@ -60,7 +60,7 @@ def send_password_reset(email, reset_token):
 
 def send_notification(user_email, task_title):
     """Send task notification"""
-    # VULN: XSS en email si task_title no está sanitizado
+    # VULN: XSS in email if task_title is not sanitized
     body = f"""
     <html>
     <body>

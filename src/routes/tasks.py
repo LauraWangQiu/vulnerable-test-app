@@ -19,13 +19,13 @@ def get_tasks():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     
-    # VULN: SQL Injection - concatenación directa (Semgrep: sql-injection)
+    # VULN: SQL Injection - direct concatenation (Semgrep: sql-injection)
     if status == 'all':
         query = f"SELECT * FROM tasks WHERE user_id = '{user_id}'"
     else:
         query = f"SELECT * FROM tasks WHERE user_id = '{user_id}' AND status = '{status}'"
     
-    cursor.execute(query)  # Ejecuta query vulnerable
+    cursor.execute(query)  # Executes vulnerable query
     tasks = cursor.fetchall()
     conn.close()
     
@@ -37,7 +37,7 @@ def get_task(task_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     
-    # VULN: SQL Injection con format string
+    # VULN: SQL Injection with format string
     query = "SELECT * FROM tasks WHERE id = {}".format(task_id)
     cursor.execute(query)
     
@@ -53,10 +53,10 @@ def filter_tasks():
     data = request.get_json()
     filter_expr = data.get('filter')
     
-    # VULN: eval() con input de usuario (Semgrep: dangerous-eval)
-    # Permite ejecutar código arbitrario
+    # VULN: eval() with user input (Semgrep: dangerous-eval)
+    # Allows execution of arbitrary code
     try:
-        result = eval(filter_expr)  # PELIGROSO: eval con input de usuario
+        result = eval(filter_expr)  # DANGEROUS: eval with user input
         return jsonify({'result': result})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
@@ -68,8 +68,8 @@ def import_tasks():
     yaml_content = request.data.decode('utf-8')
     
     # VULN: Unsafe YAML loading (Semgrep: insecure-yaml-load)
-    # Permite deserialización de objetos arbitrarios
-    tasks_data = yaml.load(yaml_content)  # Debería ser yaml.safe_load()
+    # Allows deserialization of arbitrary objects
+    tasks_data = yaml.load(yaml_content)  # Should be yaml.safe_load()
     
     return jsonify({'imported': len(tasks_data.get('tasks', []))})
 
@@ -82,7 +82,7 @@ def export_tasks():
     
     # VULN: Command injection (Semgrep: command-injection)
     cmd = f"python /app/scripts/export.py --format {format_type} --output /tmp/{filename}"
-    result = subprocess.call(cmd, shell=True)  # shell=True es peligroso
+    result = subprocess.call(cmd, shell=True)  # shell=True is dangerous
     
     return jsonify({'status': 'exported', 'file': filename})
 

@@ -9,11 +9,11 @@ from config import DEBUG, SECRET_KEY
 
 app = Flask(__name__)
 
-# VULN: Configuración insegura
-app.config['DEBUG'] = DEBUG  # VULN: Debug habilitado
+# VULN: Insecure configuration
+app.config['DEBUG'] = DEBUG  # VULN: Debug enabled
 app.config['SECRET_KEY'] = SECRET_KEY
-app.config['SESSION_COOKIE_SECURE'] = False  # VULN: Cookies sin secure flag
-app.config['SESSION_COOKIE_HTTPONLY'] = False  # VULN: Cookies accesibles desde JS
+app.config['SESSION_COOKIE_SECURE'] = False  # VULN: Cookies without secure flag
+app.config['SESSION_COOKIE_HTTPONLY'] = False  # VULN: Cookies accessible from JS
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -38,13 +38,13 @@ def health():
 
 @app.errorhandler(500)
 def handle_500(error):
-    # VULN: Stack trace expuesto en errores
+    # VULN: Stack trace exposed in errors
     return jsonify({
         'error': str(error),
-        'trace': str(error.__traceback__)  # VULN: Información sensible
+        'trace': str(error.__traceback__)  # VULN: Sensitive information
     }), 500
 
 
 if __name__ == '__main__':
-    # VULN: Bind a 0.0.0.0 expone a toda la red
+    # VULN: Bind to 0.0.0.0 exposes to the whole network
     app.run(host='0.0.0.0', port=5000, debug=True)

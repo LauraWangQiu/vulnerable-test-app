@@ -1,5 +1,5 @@
 # TaskManager Infrastructure - Terraform
-# VULN: Configuraciones inseguras para testing de Checkov
+# VULN: Insecure configurations for Checkov testing
 
 terraform {
   required_version = ">= 1.0.0"
@@ -11,13 +11,13 @@ terraform {
     }
   }
   
-  # VULN: Backend sin cifrado (CKV_AWS_S3_BUCKET_ENCRYPTION)
+  # VULN: Backend without encryption (CKV_AWS_S3_BUCKET_ENCRYPTION)
   backend "s3" {
     bucket = "taskmanager-tfstate"
     key    = "prod/terraform.tfstate"
     region = "eu-west-1"
-    # VULN: Sin DynamoDB lock table
-    # VULN: Sin encrypt = true
+    # VULN: No DynamoDB lock table
+    # VULN: No encrypt = true
   }
 }
 
@@ -44,6 +44,6 @@ variable "environment" {
 variable "db_password" {
   description = "Database password"
   type        = string
-  # VULN: Default password en variable (CKV_AWS_79)
+  # VULN: Default password in variable (CKV_AWS_79)
   default     = "SuperSecretPass123"
 }

@@ -1,5 +1,5 @@
 # Gitleaks Configuration
-# Configuración mínima - detecta todos los secrets sin excepciones
+# Minimal configuration - detects all secrets without exceptions
 
 title = "TaskManager Gitleaks Config"
 

@@ -1,9 +1,9 @@
 # RDS Database Configuration
-# VULN: Base de datos mal configurada para testing de Checkov
+# VULN: Misconfigured database for Checkov testing
 
-# VULN: RDS sin cifrado (CKV_AWS_16)
-# VULN: RDS públicamente accesible (CKV_AWS_17)
-# VULN: Sin backup habilitado (CKV_AWS_133)
+# VULN: RDS without encryption (CKV_AWS_16)
+# VULN: RDS publicly accessible (CKV_AWS_17)
+# VULN: No backup enabled (CKV_AWS_133)
 resource "aws_db_instance" "postgres" {
   identifier        = "taskmanager-db"
   engine            = "postgres"
@@ -13,28 +13,28 @@ resource "aws_db_instance" "postgres" {
   
   db_name  = "taskmanager"
   username = "admin"
-  password = var.db_password  # VULN: Password en variable con default
+  password = var.db_password  # VULN: Password in variable with default
   
-  # VULN: SG permite acceso desde cualquier IP
+  # VULN: SG allows access from any IP
   vpc_security_group_ids = [aws_security_group.web.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
   
-  # VULN: Públicamente accesible (CKV_AWS_17)
-  publicly_accessible = true  # VULN: Debería ser false
+  # VULN: Publicly accessible (CKV_AWS_17)
+  publicly_accessible = true  # VULN: Should be false
   
-  # VULN: Sin cifrado (CKV_AWS_16)
-  storage_encrypted = false  # VULN: Debería ser true
+  # VULN: No encryption (CKV_AWS_16)
+  storage_encrypted = false  # VULN: Should be true
   
-  # VULN: Sin backup (CKV_AWS_133)
-  backup_retention_period = 0  # VULN: Debería ser >= 7
+  # VULN: No backup (CKV_AWS_133)
+  backup_retention_period = 0  # VULN: Should be >= 7
   
-  # VULN: Sin deletion protection (CKV_AWS_162)
-  deletion_protection = false  # VULN: Debería ser true en prod
+  # VULN: No deletion protection (CKV_AWS_162)
+  deletion_protection = false  # VULN: Should be true in prod
   
-  # VULN: Sin logging habilitado (CKV_AWS_129)
+  # VULN: No logging enabled (CKV_AWS_129)
   # enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
   
-  # VULN: Sin auto minor version upgrade
+  # VULN: No auto minor version upgrade
   auto_minor_version_upgrade = false
   
   skip_final_snapshot = true
