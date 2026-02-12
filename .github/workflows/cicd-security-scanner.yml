@@ -109,6 +109,8 @@ jobs:
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
           fail_on_findings: 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ──────────────────────────────────────────────
   #  MANUAL / PR: SCA
@@ -126,6 +128,8 @@ jobs:
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
           fail_on_vulnerabilities: 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ──────────────────────────────────────────────
   #  MANUAL / PR: IaC
@@ -143,6 +147,8 @@ jobs:
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
           fail_on_findings: 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ──────────────────────────────────────────────
   #  MANUAL / PR: Container
@@ -160,6 +166,8 @@ jobs:
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
           fail_on_vulnerabilities: 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ──────────────────────────────────────────────
   #  Security Gate — all selected scans must pass
