@@ -19,58 +19,101 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 
 ### 1. Secrets - Credenciales Expuestas (Gitleaks)
 
-| Archivo | Vulnerabilidad | Línea |
-|---------|---------------|-------|
-| `src/config.py` | AWS Access Key ID hardcodeada | 8 |
-| `src/config.py` | AWS Secret Access Key hardcodeada | 9 |
-| `src/config.py` | Database password en código | 18 |
-| `src/config.py` | Stripe API Key hardcodeada | 22 |
-| `src/config.py` | SendGrid API Key hardcodeada | 23 |
-| `src/config.py` | Redis password en URL | 29 |
-| `src/utils/email.py` | SMTP password hardcodeado | 12 |
-| `src/utils/email.py` | SendGrid API Key | 16 |
-| `src/routes/auth.py` | JWT Secret hardcodeado | 8 |
-| `Dockerfile` | DB_PASSWORD en ARG | 12 |
-| `Dockerfile` | AWS_ACCESS_KEY_ID en ENV | 17 |
-| `docker-compose.yaml` | AWS credentials en environment | 17-18 |
-| `docker-compose.yaml` | POSTGRES_PASSWORD hardcodeado | 41 |
-| `terraform/ec2.tf` | Secrets en user_data | 76-77 |
-| `.env.example` | Environment template containing multiple secrets (API keys, tokens, secrets) | 8-11-14-43-44 |
-| `k8s/deployment.yaml` | Kubernetes manifest with embedded secrets (Stripe, env vars) | 60-80 |
-| `src/templates/task.html` | Template containing a hardcoded Stripe key | 88 |
+| Archivo | Vulnerabilidad (Regla) | Línea |
+|---|---|---|
+| `k8s/deployment.yaml` | stripe-access-token | 67 |
+| `docker-compose.yaml` | aws-access-token | 17 |
+| `docker-compose.yaml` | generic-api-key | 16 |
+| `docker-compose.yaml` | generic-api-key | 18 |
+| `docker-compose.yaml` | generic-api-key | 41 |
+| `Dockerfile` | generic-api-key | 9 |
+| `Dockerfile` | generic-api-key | 12 |
+| `Dockerfile` | generic-api-key | 17 |
+| `Dockerfile` | stripe-access-token | 13 |
+| `Dockerfile` | aws-access-token | 18 |
+| `.env.example` | generic-api-key | 44 |
+| `.env.example` | github-pat | 8 |
+| `.env.example` | aws-access-token | 43 |
+| `.env.example` | slack-webhook-url | 11 |
+| `.env.example` | private-key | 14 |
+| `src/routes/auth.py` | generic-api-key | 9 |
+| `src/templates/task.html` | stripe-access-token | 88 |
+| `src/config.py` | generic-api-key | 9 |
+| `src/config.py` | generic-api-key | 18 |
+| `src/config.py` | sendgrid-api-token | 23 |
+| `src/config.py` | stripe-access-token | 22 |
+| `src/config.py` | aws-access-token | 8 |
+| `src/utils/email.py` | sendgrid-api-token | 17 |
+| `src/utils/email.py` | generic-api-key | 13 |
+| `terraform/ec2.tf` | generic-api-key | 76 |
 
 ### 2. SAST - Código Vulnerable (Semgrep)
 
-| Archivo | Vulnerabilidad | CWE | Línea |
-|---------|---------------|-----|-------|
-| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 23-25 |
+| Archivo | Vulnerabilidad (Regla) | CWE | Línea |
+|---|---|---|---|
+| `src/app.py` | flask app with host 0.0.0.0 | CWE-200 | 50 |
+| `src/app.py` | Flask app with debug=True | CWE-200 | 50 |
+| `src/routes/auth.py` | Weak password hashing (MD5) | CWE-328 | 21 |
+| `src/routes/auth.py` | Hardcoded JWT secret | CWE-798 | 27 |
+| `src/routes/auth.py` | Weak password hashing (MD5) | CWE-328 | 46 |
+| `src/routes/auth.py` | SQL Injection en registro | CWE-89 | 49 |
+| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 16 |
+| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 17 |
+| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 24 |
+| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 26 |
 | `src/routes/tasks.py` | SQL Injection (format) | CWE-89 | 41 |
-| `src/routes/tasks.py` | eval() con input usuario | CWE-95 | 55 |
-| `src/routes/tasks.py` | Unsafe YAML load | CWE-502 | 67 |
-| `src/routes/tasks.py` | Command Injection (shell=True) | CWE-78 | 78-79 |
-| `src/routes/auth.py` | Weak password hashing (MD5) | CWE-328 | 20 |
-| `src/routes/auth.py` | Hardcoded JWT secret | CWE-798 | 8 |
-| `src/routes/auth.py` | SQL Injection en registro | CWE-89 | 47 |
-| `src/utils/files.py` | Path traversal (os.path.join) | CWE-22 | 16-17 |
-| `src/utils/files.py` | Arbitrary file read | CWE-22 | 34 |
-| `src/utils/files.py` | Arbitrary file write | CWE-22 | 46 |
+| `src/routes/tasks.py` | SQL Injection (format) | CWE-89 | 42 |
+| `src/routes/tasks.py` | eval() con input usuario | CWE-95 | 59 |
+| `src/routes/tasks.py` | Command Injection (shell=True) | CWE-78 | 85 |
+| `src/routes/tasks.py` | Raw HTML construction | CWE-79 | 97 |
+| `src/templates/task.html` | Missing integrity attribute | CWE-345 | 36 |
+| `src/utils/files.py` | Path traversal | CWE-22 | 32 |
+| `src/utils/files.py` | Path traversal | CWE-22 | 35 |
+| `src/utils/files.py` | Command Injection (shell=True) | CWE-78 | 72 |
 
 ### 3. SCA - Dependencias Vulnerables (Trivy)
 
 #### Python (`requirements.txt`)
 
-| Dependencia | Versión | CVE | Severidad |
-|-------------|---------|-----|-----------|
-| Flask | 1.0.0 | CVE-2023-30861 | High |
-| Jinja2 | 2.10 | CVE-2019-10906 | Critical |
-| PyYAML | 5.1 | CVE-2020-14343 | Critical |
-| requests | 2.20.0 | CVE-2018-18074 | Medium |
-| SQLAlchemy | 1.2.0 | CVE-2019-7164 | High |
-| Pillow | 8.0.0 | CVE-2022-22817 | Critical |
-| lxml | 4.5.0 | CVE-2020-28463 | High |
-| paramiko | 2.7.0 | CVE-2022-24302 | High |
-| cryptography | 3.2 | CVE-2020-36242 | High |
-| boto3 | 1.17.0 | CVE-2022-25168 | Medium |
+| Dependencia | Versión | CVE | Severidad | Versión Corregida |
+|---|---|---|---|---|
+| Flask | 1.0.0 | CVE-2023-30861 | HIGH | 2.3.2, 2.2.5 |
+| Jinja2 | 2.10 | CVE-2019-10906 | HIGH | 2.10.1 |
+| Pillow | 8.0.0 | CVE-2021-25289 | CRITICAL | 8.1.1 |
+| Pillow | 8.0.0 | CVE-2021-34552 | CRITICAL | 8.3.0 |
+| Pillow | 8.0.0 | CVE-2022-22817 | CRITICAL | 9.0.1 |
+| Pillow | 8.0.0 | CVE-2023-50447 | CRITICAL | 10.2.0 |
+| Pillow | 8.0.0 | CVE-2020-35653 | HIGH | 8.1.0 |
+| Pillow | 8.0.0 | CVE-2020-35654 | HIGH | 8.1.0 |
+| Pillow | 8.0.0 | CVE-2021-23437 | HIGH | 8.3.2 |
+| Pillow | 8.0.0 | CVE-2021-25287 | HIGH | 8.2.0 |
+| Pillow | 8.0.0 | CVE-2021-25288 | HIGH | 8.2.0 |
+| Pillow | 8.0.0 | CVE-2021-25290 | HIGH | 8.1.1 |
+| Pillow | 8.0.0 | CVE-2021-25291 | HIGH | 8.2.0 |
+| Pillow | 8.0.0 | CVE-2021-25293 | HIGH | 8.1.1 |
+| Pillow | 8.0.0 | CVE-2021-27921 | HIGH | 8.1.2 |
+| Pillow | 8.0.0 | CVE-2021-27922 | HIGH | 8.1.2 |
+| Pillow | 8.0.0 | CVE-2021-27923 | HIGH | 8.1.2 |
+| Pillow | 8.0.0 | CVE-2021-28675 | HIGH | 8.2.0 |
+| Pillow | 8.0.0 | CVE-2021-28676 | HIGH | 8.2.0 |
+| Pillow | 8.0.0 | CVE-2021-28677 | HIGH | 8.2.0 |
+| Pillow | 8.0.0 | CVE-2022-24303 | HIGH | 9.0.1 |
+| Pillow | 8.0.0 | CVE-2022-45198 | HIGH | 9.2.0 |
+| Pillow | 8.0.0 | CVE-2023-44271 | HIGH | 10.0.0 |
+| Pillow | 8.0.0 | CVE-2023-4863 | HIGH | 10.0.1 |
+| Pillow | 8.0.0 | CVE-2024-28219 | HIGH | 10.3.0 |
+| PyJWT | 1.7.0 | CVE-2022-29217 | HIGH | 2.4.0 |
+| PyYAML | 5.1 | CVE-2019-20477 | CRITICAL | 5.2 |
+| PyYAML | 5.1 | CVE-2020-14343 | CRITICAL | 5.4 |
+| PyYAML | 5.1 | CVE-2020-1747 | CRITICAL | 5.3.1 |
+| SQLAlchemy | 1.2.0 | CVE-2019-7164 | CRITICAL | 1.3.0b3, 1.2.18 |
+| SQLAlchemy | 1.2.0 | CVE-2019-7548 | CRITICAL | 1.2.19 |
+| cryptography | 3.2 | CVE-2020-36242 | HIGH | 3.3.2 |
+| cryptography | 3.2 | CVE-2023-0286 | HIGH | 39.0.1 |
+| cryptography | 3.2 | CVE-2023-50782 | HIGH | 42.0.0 |
+| cryptography | 3.2 | CVE-2026-26007 | HIGH | 46.0.5 |
+| gunicorn | 20.0.4 | CVE-2024-1135 | HIGH | 22.0.0 |
+| gunicorn | 20.0.4 | CVE-2024-6827 | HIGH | 22.0.0 |
 
 #### Node.js (`package.json`)
 
@@ -90,69 +133,136 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 
 #### Terraform
 
-| Archivo | Vulnerabilidad | Check ID |
-|---------|---------------|----------|
-| `terraform/s3.tf` | S3 bucket con ACL público | CKV_AWS_20 |
-| `terraform/s3.tf` | S3 sin server-side encryption | CKV_AWS_19 |
-| `terraform/s3.tf` | S3 sin versionado | CKV_AWS_21 |
-| `terraform/s3.tf` | S3 sin logging | CKV_AWS_18 |
-| `terraform/s3.tf` | S3 permite acceso público | CKV_AWS_53-56 |
-| `terraform/ec2.tf` | Security Group SSH abierto (0.0.0.0/0) | CKV_AWS_24 |
-| `terraform/ec2.tf` | Security Group DB abierta al mundo | CKV_AWS_23 |
-| `terraform/ec2.tf` | EC2 sin IMDSv2 | CKV_AWS_79 |
-| `terraform/ec2.tf` | EBS sin cifrado | CKV_AWS_3 |
-| `terraform/ec2.tf` | Secrets en user_data | CKV_AWS_46 |
-| `terraform/rds.tf` | RDS sin cifrado | CKV_AWS_16 |
-| `terraform/rds.tf` | RDS públicamente accesible | CKV_AWS_17 |
-| `terraform/rds.tf` | RDS sin backup habilitado | CKV_AWS_133 |
-| `terraform/rds.tf` | RDS sin deletion protection | CKV_AWS_162 |
+| Archivo | Recurso | Vulnerabilidad (Check ID) | Línea |
+|---|---|---|---|
+| `terraform/ec2.tf` | aws_security_group.web | CKV_AWS_24 | 5 |
+| `terraform/ec2.tf` | aws_security_group.web | CKV_AWS_23 | 5 |
+| `terraform/ec2.tf` | aws_security_group.web | CKV_AWS_382 | 5 |
+| `terraform/ec2.tf` | aws_security_group.web | CKV_AWS_260 | 5 |
+| `terraform/ec2.tf` | aws_instance.web | CKV_AWS_8 | 52 |
+| `terraform/ec2.tf` | aws_instance.web | CKV_AWS_88 | 52 |
+| `terraform/ec2.tf` | aws_instance.web | CKV_AWS_79 | 52 |
+| `terraform/ec2.tf` | aws_instance.web | CKV_AWS_135 | 52 |
+| `terraform/ec2.tf` | aws_instance.web | CKV_AWS_126 | 52 |
+| `terraform/ec2.tf` | aws_subnet.public | CKV_AWS_130 | 97 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_293 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_17 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_129 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_118 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_353 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_16 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_133 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_226 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_157 | 7 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_161 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket_policy.uploads_policy | CKV_AWS_70 | 19 |
+| `terraform/s3.tf` | aws_s3_bucket_public_access_block.uploads_public_access | CKV_AWS_53 | 37 |
+| `terraform/s3.tf` | aws_s3_bucket_public_access_block.uploads_public_access | CKV_AWS_55 | 37 |
+| `terraform/s3.tf` | aws_s3_bucket_public_access_block.uploads_public_access | CKV_AWS_54 | 37 |
+| `terraform/s3.tf` | aws_s3_bucket_public_access_block.uploads_public_access | CKV_AWS_56 | 37 |
+| `terraform/s3.tf` | aws_s3_bucket.uploads | CKV_AWS_145 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket.logs | CKV_AWS_145 | 47 |
+| `terraform/s3.tf` | aws_s3_bucket.uploads | CKV2_AWS_61 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket.logs | CKV2_AWS_61 | 47 |
+| `terraform/s3.tf` | aws_s3_bucket.uploads | CKV2_AWS_6 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket.logs | CKV2_AWS_6 | 47 |
+| `terraform/s3.tf` | aws_s3_bucket.uploads | CKV_AWS_21 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket.logs | CKV_AWS_21 | 47 |
+| `terraform/s3.tf` | aws_s3_bucket.uploads | CKV_AWS_18 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket.logs | CKV_AWS_18 | 47 |
+| `terraform/ec2.tf` | aws_vpc.main | CKV2_AWS_12 | 87 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV2_AWS_30 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket.uploads | CKV2_AWS_62 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket.logs | CKV2_AWS_62 | 47 |
+| `terraform/ec2.tf` | aws_vpc.main | CKV2_AWS_11 | 87 |
+| `terraform/s3.tf` | aws_s3_bucket.uploads | CKV_AWS_144 | 7 |
+| `terraform/s3.tf` | aws_s3_bucket.logs | CKV_AWS_144 | 47 |
+| `terraform/s3.tf` | aws_s3_bucket.uploads | CKV_AWS_20 | 7 |
+| `terraform/ec2.tf` | aws_instance.web | CKV2_AWS_41 | 52 |
+| `terraform/rds.tf` | aws_db_instance.postgres | CKV2_AWS_60 | 7 |
 
 #### Kubernetes (`k8s/deployment.yaml`)
 
-| Vulnerabilidad | Check ID | Línea |
-|---------------|----------|-------|
-| Container privilegiado | CKV_K8S_16 | 44 |
-| Ejecuta como root (runAsUser: 0) | CKV_K8S_23 | 47 |
-| runAsNonRoot: false | CKV_K8S_22 | 48 |
-| allowPrivilegeEscalation: true | CKV_K8S_20 | 51 |
-| readOnlyRootFilesystem: false | CKV_K8S_22 | 54 |
-| Capabilities peligrosas (SYS_ADMIN) | CKV_K8S_39 | 58-61 |
-| Secrets en env plano | CKV_K8S_35 | 64-70 |
-| Sin liveness probe | CKV_K8S_8 | - |
-| Sin readiness probe | CKV_K8S_9 | - |
-| Sin resource limits | CKV_K8S_11-13 | - |
-| Docker socket montado | CKV_K8S_27 | 79-80 |
-| hostPath volume | CKV_K8S_26 | 75-76 |
-| hostNetwork: true | CKV_K8S_19 | 87 |
-| hostPID: true | CKV_K8S_17 | 88 |
-| Namespace default | CKV_K8S_21 | 6 |
-| Image tag :latest | CKV_K8S_14 | 25 |
+| Recurso | Vulnerabilidad (Check ID) | Línea |
+|---|---|---|
+| Deployment.default.taskmanager | CKV_K8S_31 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_29 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_13 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_40 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_39 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_16 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_17 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_28 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_21 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_19 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_27 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_22 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_23 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_9 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_38 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_10 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_20 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_37 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_12 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_8 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_25 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_43 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_11 | 3 |
+| Deployment.default.taskmanager | CKV_K8S_14 | 3 |
+| Pod.default.taskmanager.app-taskmanager | CKV2_K8S_6 | 3 |
 
-#### Docker Compose (`docker-compose.yaml`)
+#### Dockerfile
 
-| Vulnerabilidad | Descripción |
-|---------------|-------------|
-| Puerto SSH expuesto | Port 22:22 |
-| Docker socket montado | /var/run/docker.sock |
-| privileged: true | Container con todos los privilegios |
-| Secrets en environment | Credenciales en texto plano |
-| DB expuesta al host | Port 5432:5432 |
-| Redis expuesto | Port 6379:6379 |
-| Sin health checks | No defined |
-| Sin resource limits | No defined |
+| Recurso | Vulnerabilidad (Check ID) | Línea |
+|---|---|---|
+| /Dockerfile.EXPOSE | CKV_DOCKER_1 | 22 |
+| /Dockerfile. | CKV_DOCKER_3 | 1 |
+
+#### GitHub Actions
+
+> **Nota de Seguridad:** El workflow `.github/workflows/security.yml` presenta la vulnerabilidad **CKV_GHA_7**, que advierte sobre el uso de `workflow_dispatch` con `inputs`. Esto podría permitir a un usuario con permisos de escritura manipular los parámetros del pipeline. Aunque es un riesgo de seguridad, se ha mantenido intencionadamente en este repositorio de prueba para demostrar la detección de malas configuraciones en pipelines CI/CD. En un entorno de producción, se recomienda eliminar los `inputs` o implementar validaciones estrictas.
+
+| Recurso | Vulnerabilidad (Check ID) | Línea |
+|---|---|---|
+| on(Security Pipeline) | CKV_GHA_7 | 3 |
 
 ### 5. Container - Imagen Vulnerable (Trivy)
 
-| Archivo | Vulnerabilidad | Descripción |
-|---------|---------------|-------------|
-| `Dockerfile` | Imagen base antigua | python:3.8-slim con CVEs conocidos |
-| `Dockerfile` | Ejecución como root | No define USER non-root |
-| `Dockerfile` | Secrets en ARG | DB_PASSWORD, API_KEY visibles en history |
-| `Dockerfile` | Secrets en ENV | DATABASE_URL, SECRET_KEY, AWS keys |
-| `Dockerfile` | Puerto 22 expuesto | EXPOSE 22 (SSH) |
-| `Dockerfile` | Herramientas debug | strace, tcpdump en producción |
-| `Dockerfile` | Sin verificación checksum | curl sin validación |
-| `Dockerfile` | Secret en HEALTHCHECK | token=secret123 visible |
+| Archivo | Tipo | Vulnerabilidad (ID) | Severidad | Mensaje | Línea |
+|---|---|---|---|---|---|
+| `Dockerfile` | dockerfile | DS002 | HIGH | Specify at least 1 USER command in Dockerfile with non-root user as argument | 1 |
+| `Dockerfile` | dockerfile | DS029 | HIGH | '--no-install-recommends' flag is missed: 'apt-get update && apt-get install -y     curl     wget     netcat-openbsd     vim     strace     tcpdump' | 26 |
+| `Dockerfile` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "API_KEY" in ARG | 13 |
+| `Dockerfile` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "AWS_ACCESS_KEY_ID" in ENV | 18 |
+| `Dockerfile` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "SECRET_KEY" in ENV | 17 |
+| `k8s/deployment.yaml` | kubernetes | KSV005 | HIGH | Container 'taskmanager' of Deployment 'taskmanager' should not include 'SYS_ADMIN' in 'securityContext.capabilities.add' | 23 |
+| `k8s/deployment.yaml` | kubernetes | KSV006 | HIGH | Deployment 'taskmanager' should not specify '/var/run/docker.socker' in 'spec.template.volumes.hostPath.path' | 10 |
+| `k8s/deployment.yaml` | kubernetes | KSV009 | HIGH | Deployment 'taskmanager' should not set 'spec.template.spec.hostNetwork' to true | 10 |
+| `k8s/deployment.yaml` | kubernetes | KSV010 | HIGH | Deployment 'taskmanager' should not set 'spec.template.spec.hostPID' to true | 10 |
+| `k8s/deployment.yaml` | kubernetes | KSV014 | HIGH | Container 'taskmanager' of Deployment 'taskmanager' should set 'securityContext.readOnlyRootFilesystem' to true | 23 |
+| `k8s/deployment.yaml` | kubernetes | KSV017 | HIGH | Container 'taskmanager' of Deployment 'taskmanager' should set 'securityContext.privileged' to false | 23 |
+| `k8s/deployment.yaml` | kubernetes | KSV118 | HIGH | deployment taskmanager in default namespace is using the default security context, which allows root privileges | 19 |
+| `terraform/ec2.tf` | terraform | AVD-AWS-0028 | HIGH | Instance does not require IMDS access to require a token. | 52 |
+| `terraform/ec2.tf` | terraform | aws-autoscaling-no-public-ip | CRITICAL | Sensitive data found in instance user data: Password literal text | 74 |
+| `terraform/ec2.tf` | terraform | aws-vpc-no-public-egress-sgr | CRITICAL | Security group rule allows unrestricted egress to any IP address. | 42 |
+| `terraform/ec2.tf` | terraform | AVD-AWS-0107 | HIGH | Security group rule allows unrestricted ingress from any IP address. | 16 |
+| `terraform/ec2.tf` | terraform | AVD-AWS-0131 | HIGH | Root block device is not encrypted. | 70 |
+| `terraform/ec2.tf` | terraform | aws-vpc-no-public-ingress-sgr | HIGH | Subnet associates public IP address. | 101 |
+| `terraform/rds.tf` | terraform | AVD-AWS-0080 | HIGH | Instance does not have storage encryption enabled. | 26 |
+| `terraform/rds.tf` | terraform | AVD-AWS-0180 | HIGH | Instance has Public Access enabled | 23 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0086 | HIGH | No public access block so not blocking public acls | 47 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0086 | HIGH | Public access block does not block public ACLs | 40 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0087 | HIGH | No public access block so not blocking public policies | 47 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0087 | HIGH | Public access block does not block public policies | 41 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0088 | HIGH | Bucket does not have encryption enabled | 47 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0088 | HIGH | Bucket does not have encryption enabled | 7 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0091 | HIGH | No public access block so not blocking public acls | 47 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0091 | HIGH | Public access block does not ignore public ACLs | 42 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0092 | HIGH | Bucket has a public ACL: "public-read" | 11 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0093 | HIGH | No public access block so not restricting public buckets | 47 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0093 | HIGH | Public access block does not restrict public buckets | 43 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0132 | HIGH | Bucket does not encrypt data with a customer managed key. | 47 |
+| `terraform/s3.tf` | terraform | AVD-AWS-0132 | HIGH | Bucket does not encrypt data with a customer managed key. | 7 |
 
 ---
 
@@ -165,7 +275,7 @@ Ejecutando los scanners deberías obtener aproximadamente:
 | **Secrets** | ~25 |
 | **SAST** | ~26 |
 | **SCA** | ~37 |
-| **IaC** | ~77 |
+| **IaC** | ~79 |
 | **Container** | ~34 |
 
 ---
@@ -283,7 +393,7 @@ Repository: .
 ==========================================
 
   results-container.sarif: 34 findings
-  results-iac.sarif: 77 findings
+  results-iac.sarif: 79 findings
   results-sast.sarif: 26 findings
   results-sca.sarif: 37 findings
   results-secret.sarif: 25 findings
@@ -337,7 +447,7 @@ Secrets: 25 findings → results-secret.sarif
 Summary:
 
   results-container.sarif: 34 findings
-  results-iac.sarif: 77 findings
+  results-iac.sarif: 79 findings
   results-sast.sarif: 26 findings
   results-sca.sarif: 37 findings
   results-secret.sarif: 25 findings
