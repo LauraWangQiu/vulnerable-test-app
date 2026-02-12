@@ -21,55 +21,89 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 
 | Archivo | Vulnerabilidad (Regla) | Línea |
 |---|---|---|
+| `k8s/insecure-pod.yaml` | stripe-access-token | 47 |
 | `k8s/deployment.yaml` | stripe-access-token | 67 |
-| `docker-compose.yaml` | aws-access-token | 17 |
-| `docker-compose.yaml` | generic-api-key | 16 |
-| `docker-compose.yaml` | generic-api-key | 18 |
-| `docker-compose.yaml` | generic-api-key | 41 |
+| `Dockerfile.worker` | generic-api-key | 12 |
+| `src/api/user_handler.py` | generic-api-key | 83 |
+| `.env.example` | slack-webhook-url | 11 |
+| `.env.example` | private-key | 14 |
+| `.env.example` | github-pat | 8 |
+| `.env.example` | generic-api-key | 44 |
+| `.env.example` | aws-access-token | 43 |
+| `Dockerfile` | stripe-access-token | 13 |
 | `Dockerfile` | generic-api-key | 9 |
 | `Dockerfile` | generic-api-key | 12 |
 | `Dockerfile` | generic-api-key | 17 |
-| `Dockerfile` | stripe-access-token | 13 |
 | `Dockerfile` | aws-access-token | 18 |
-| `.env.example` | generic-api-key | 44 |
-| `.env.example` | github-pat | 8 |
-| `.env.example` | aws-access-token | 43 |
-| `.env.example` | slack-webhook-url | 11 |
-| `.env.example` | private-key | 14 |
+| `docker-compose.yaml` | generic-api-key | 16 |
+| `docker-compose.yaml` | generic-api-key | 18 |
+| `docker-compose.yaml` | generic-api-key | 41 |
+| `docker-compose.yaml` | aws-access-token | 17 |
 | `src/routes/auth.py` | generic-api-key | 9 |
-| `src/templates/task.html` | stripe-access-token | 88 |
+| `src/config.py` | sendgrid-api-token | 23 |
 | `src/config.py` | generic-api-key | 9 |
 | `src/config.py` | generic-api-key | 18 |
-| `src/config.py` | sendgrid-api-token | 23 |
-| `src/config.py` | stripe-access-token | 22 |
 | `src/config.py` | aws-access-token | 8 |
+| `src/config.py` | stripe-access-token | 22 |
+| `terraform/lambda.tf` | hashicorp-tf-password | 17 |
+| `terraform/lambda.tf` | stripe-access-token | 18 |
 | `src/utils/email.py` | sendgrid-api-token | 17 |
 | `src/utils/email.py` | generic-api-key | 13 |
 | `terraform/ec2.tf` | generic-api-key | 76 |
+| `src/auth/credentials.py` | slack-webhook-url | 22 |
+| `src/auth/credentials.py` | private-key | 25 |
+| `src/auth/credentials.py` | github-pat | 21 |
+| `src/auth/credentials.py` | sendgrid-api-token | 20 |
+| `src/auth/credentials.py` | generic-api-key | 19 |
+| `src/auth/credentials.py` | stripe-access-token | 18 |
+| `src/templates/task.html` | stripe-access-token | 88 |
 
 ### 2. SAST - Código Vulnerable (Semgrep)
 
 | Archivo | Vulnerabilidad (Regla) | CWE | Línea |
 |---|---|---|---|
-| `src/app.py` | flask app with host 0.0.0.0 | CWE-200 | 50 |
-| `src/app.py` | Flask app with debug=True | CWE-200 | 50 |
-| `src/routes/auth.py` | Weak password hashing (MD5) | CWE-328 | 21 |
-| `src/routes/auth.py` | Hardcoded JWT secret | CWE-798 | 27 |
-| `src/routes/auth.py` | Weak password hashing (MD5) | CWE-328 | 46 |
-| `src/routes/auth.py` | SQL Injection en registro | CWE-89 | 49 |
-| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 16 |
-| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 17 |
-| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 24 |
-| `src/routes/tasks.py` | SQL Injection (f-string) | CWE-89 | 26 |
-| `src/routes/tasks.py` | SQL Injection (format) | CWE-89 | 41 |
-| `src/routes/tasks.py` | SQL Injection (format) | CWE-89 | 42 |
-| `src/routes/tasks.py` | eval() con input usuario | CWE-95 | 59 |
-| `src/routes/tasks.py` | Command Injection (shell=True) | CWE-78 | 85 |
-| `src/routes/tasks.py` | Raw HTML construction | CWE-79 | 97 |
-| `src/templates/task.html` | Missing integrity attribute | CWE-345 | 36 |
-| `src/utils/files.py` | Path traversal | CWE-22 | 32 |
-| `src/utils/files.py` | Path traversal | CWE-22 | 35 |
-| `src/utils/files.py` | Command Injection (shell=True) | CWE-78 | 72 |
+| `src/api/user_handler.py` | python.lang.security.audit.formatted-sql-query.formatted-sql-query | CWE-89 | 19 |
+| `src/api/user_handler.py` | python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query | CWE-89 | 19 |
+| `src/api/user_handler.py` | python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query | CWE-89 | 27 |
+| `src/api/user_handler.py` | python.lang.security.audit.subprocess-shell-true.subprocess-shell-true | CWE-78 | 34 |
+| `src/api/user_handler.py` | python.lang.security.deserialization.pickle.avoid-pickle | CWE-502 | 61 |
+| `src/api/user_handler.py` | python.lang.security.audit.md5-used-as-password.md5-used-as-password | CWE-327 | 72 |
+| `src/api/user_handler.py` | python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1 | CWE-327 | 77 |
+| `src/api/user_handler.py` | python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected | CWE-20 | 91 |
+| `src/api/user_handler.py` | python.flask.security.audit.directly-returned-format-string.directly-returned-format-string | CWE-79 | 98 |
+| `src/api/user_handler.py` | python.django.security.injection.raw-html-format.raw-html-format | CWE-79 | 98 |
+| `src/api/user_handler.py` | python.flask.security.injection.raw-html-concat.raw-html-format | CWE-79 | 98 |
+| `src/api/user_handler.py` | python.lang.security.audit.eval-detected.eval-detected | CWE-95 | 112 |
+| `src/api/user_handler.py` | python.lang.security.audit.exec-detected.exec-detected | CWE-78 | 118 |
+| `src/app.py` | python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host | CWE-200 | 50 |
+| `src/app.py` | python.flask.security.audit.debug-enabled.debug-enabled | CWE-200 | 50 |
+| `src/routes/auth.py` | python.lang.security.audit.md5-used-as-password.md5-used-as-password | CWE-327 | 21 |
+| `src/routes/auth.py` | python.jwt.security.jwt-hardcode.jwt-python-hardcoded-secret | CWE-798 | 27 |
+| `src/routes/auth.py` | python.lang.security.audit.md5-used-as-password.md5-used-as-password | CWE-327 | 46 |
+| `src/routes/auth.py` | python.django.security.injection.tainted-sql-string.tainted-sql-string | CWE-89 | 49 |
+| `src/routes/auth.py` | python.flask.security.injection.tainted-sql-string.tainted-sql-string | CWE-89 | 49 |
+| `src/routes/tasks.py` | python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute | CWE-89 | 16 |
+| `src/routes/tasks.py` | python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute | CWE-89 | 17 |
+| `src/routes/tasks.py` | python.django.security.injection.tainted-sql-string.tainted-sql-string | CWE-89 | 24 |
+| `src/routes/tasks.py` | python.flask.security.injection.tainted-sql-string.tainted-sql-string | CWE-89 | 24 |
+| `src/routes/tasks.py` | python.django.security.injection.tainted-sql-string.tainted-sql-string | CWE-89 | 26 |
+| `src/routes/tasks.py` | python.flask.security.injection.tainted-sql-string.tainted-sql-string | CWE-89 | 26 |
+| `src/routes/tasks.py` | python.flask.security.injection.tainted-sql-string.tainted-sql-string | CWE-89 | 41 |
+| `src/routes/tasks.py` | python.lang.security.audit.formatted-sql-query.formatted-sql-query | CWE-89 | 42 |
+| `src/routes/tasks.py` | python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query | CWE-89 | 42 |
+| `src/routes/tasks.py` | python.lang.security.audit.eval-detected.eval-detected | CWE-95 | 59 |
+| `src/routes/tasks.py` | python.flask.security.injection.subprocess-injection.subprocess-injection | CWE-78 | 85 |
+| `src/routes/tasks.py` | python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use | CWE-78 | 85 |
+| `src/routes/tasks.py` | python.lang.security.audit.subprocess-shell-true.subprocess-shell-true | CWE-78 | 85 |
+| `src/routes/tasks.py` | python.django.security.injection.raw-html-format.raw-html-format | CWE-79 | 97 |
+| `src/routes/tasks.py` | python.flask.security.injection.raw-html-concat.raw-html-format | CWE-79 | 97 |
+| `src/templates/task.html` | html.security.audit.missing-integrity.missing-integrity | CWE-933 | 36 |
+| `src/utils/crypto_utils.py` | python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1 | CWE-327 | 20 |
+| `src/utils/crypto_utils.py` | python.pycryptodome.security.insecure-cipher-algorithm-des.insecure-cipher-algorithm-des | CWE-327 | 30 |
+| `src/utils/crypto_utils.py` | python.pycryptodome.security.insufficient-rsa-key-size.insufficient-rsa-key-size | CWE-326 | 64 |
+| `src/utils/files.py` | python.django.security.injection.path-traversal.path-traversal-open.path-traversal-open | CWE-22 | 32 |
+| `src/utils/files.py` | python.flask.security.injection.path-traversal-open.path-traversal-open | CWE-22 | 35 |
+| `src/utils/files.py` | python.lang.security.audit.subprocess-shell-true.subprocess-shell-true | CWE-78 | 72 |
 
 ### 3. SCA - Dependencias Vulnerables (Trivy)
 
@@ -145,6 +179,38 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 | `terraform/ec2.tf` | aws_instance.web | CKV_AWS_135 | 52 |
 | `terraform/ec2.tf` | aws_instance.web | CKV_AWS_126 | 52 |
 | `terraform/ec2.tf` | aws_subnet.public | CKV_AWS_130 | 97 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV_AWS_62 | 5 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV_AWS_290 | 5 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV_AWS_355 | 5 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV_AWS_289 | 5 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV_AWS_287 | 5 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV_AWS_286 | 5 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV_AWS_288 | 5 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV_AWS_63 | 5 |
+| `terraform/iam.tf` | aws_iam_role.vulnerable_role | CKV_AWS_60 | 23 |
+| `terraform/iam.tf` | aws_iam_user.admin_user | CKV_AWS_273 | 42 |
+| `terraform/iam.tf` | aws_iam_user_policy.admin_inline | CKV_AWS_290 | 50 |
+| `terraform/iam.tf` | aws_iam_user_policy.admin_inline | CKV_AWS_355 | 50 |
+| `terraform/iam.tf` | aws_iam_user_policy.admin_inline | CKV_AWS_289 | 50 |
+| `terraform/iam.tf` | aws_iam_user_policy.admin_inline | CKV_AWS_40 | 50 |
+| `terraform/iam.tf` | aws_iam_user_policy.admin_inline | CKV_AWS_287 | 50 |
+| `terraform/iam.tf` | aws_iam_user_policy.admin_inline | CKV_AWS_286 | 50 |
+| `terraform/iam.tf` | aws_iam_user_policy.admin_inline | CKV_AWS_288 | 50 |
+| `terraform/iam.tf` | aws_iam_group_policy.developer_policy | CKV_AWS_355 | 81 |
+| `terraform/iam.tf` | aws_iam_group_policy.developer_policy | CKV_AWS_289 | 81 |
+| `terraform/iam.tf` | aws_iam_group_policy.developer_policy | CKV_AWS_287 | 81 |
+| `terraform/iam.tf` | aws_iam_group_policy.developer_policy | CKV_AWS_286 | 81 |
+| `terraform/lambda.tf` | aws_lambda_function.vulnerable_lambda | CKV_AWS_173 | 5 |
+| `terraform/lambda.tf` | aws_lambda_function.vulnerable_lambda | CKV_AWS_117 | 5 |
+| `terraform/lambda.tf` | aws_lambda_function.vulnerable_lambda | CKV_AWS_116 | 5 |
+| `terraform/lambda.tf` | aws_lambda_function.vulnerable_lambda | CKV_AWS_50 | 5 |
+| `terraform/lambda.tf` | aws_lambda_function.vulnerable_lambda | CKV_AWS_115 | 5 |
+| `terraform/lambda.tf` | aws_lambda_function.vulnerable_lambda | CKV_AWS_363 | 5 |
+| `terraform/lambda.tf` | aws_lambda_function.vulnerable_lambda | CKV_AWS_272 | 5 |
+| `terraform/lambda.tf` | aws_iam_role_policy_attachment.lambda_admin | CKV_AWS_274 | 48 |
+| `terraform/lambda.tf` | aws_lambda_function_url.public_url | CKV_AWS_258 | 54 |
+| `terraform/lambda.tf` | aws_cloudwatch_log_group.lambda_logs | CKV_AWS_158 | 67 |
+| `terraform/lambda.tf` | aws_lambda_permission.public_invoke | CKV_AWS_301 | 74 |
 | `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_293 | 7 |
 | `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_17 | 7 |
 | `terraform/rds.tf` | aws_db_instance.postgres | CKV_AWS_129 | 7 |
@@ -168,9 +234,11 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 | `terraform/s3.tf` | aws_s3_bucket.logs | CKV2_AWS_6 | 47 |
 | `terraform/s3.tf` | aws_s3_bucket.uploads | CKV_AWS_21 | 7 |
 | `terraform/s3.tf` | aws_s3_bucket.logs | CKV_AWS_21 | 47 |
+| `terraform/iam.tf` | aws_iam_policy.admin_policy | CKV2_AWS_40 | 5 |
+| `terraform/ec2.tf` | aws_vpc.main | CKV2_AWS_12 | 87 |
 | `terraform/s3.tf` | aws_s3_bucket.uploads | CKV_AWS_18 | 7 |
 | `terraform/s3.tf` | aws_s3_bucket.logs | CKV_AWS_18 | 47 |
-| `terraform/ec2.tf` | aws_vpc.main | CKV2_AWS_12 | 87 |
+| `terraform/lambda.tf` | aws_lambda_function.vulnerable_lambda | CKV2_AWS_75 | 5 |
 | `terraform/rds.tf` | aws_db_instance.postgres | CKV2_AWS_30 | 7 |
 | `terraform/s3.tf` | aws_s3_bucket.uploads | CKV2_AWS_62 | 7 |
 | `terraform/s3.tf` | aws_s3_bucket.logs | CKV2_AWS_62 | 47 |
@@ -181,50 +249,55 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 | `terraform/ec2.tf` | aws_instance.web | CKV2_AWS_41 | 52 |
 | `terraform/rds.tf` | aws_db_instance.postgres | CKV2_AWS_60 | 7 |
 
-#### Kubernetes (`k8s/deployment.yaml`)
+#### Kubernetes
 
-| Recurso | Vulnerabilidad (Check ID) | Línea |
-|---|---|---|
-| Deployment.default.taskmanager | CKV_K8S_31 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_29 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_13 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_40 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_39 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_16 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_17 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_28 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_21 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_19 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_27 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_22 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_23 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_9 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_38 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_10 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_20 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_37 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_12 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_8 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_25 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_43 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_11 | 3 |
-| Deployment.default.taskmanager | CKV_K8S_14 | 3 |
-| Pod.default.taskmanager.app-taskmanager | CKV2_K8S_6 | 3 |
+| Archivo | Recurso | Vulnerabilidad (Check ID) | Línea |
+|---|---|---|---|
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_31 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_29 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_13 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_40 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_39 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_16 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_17 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_28 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_21 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_19 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_27 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_22 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_23 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_9 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_38 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_10 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_20 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_37 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_12 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_8 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_25 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_43 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_11 | 3 |
+| `k8s/deployment.yaml` | Deployment.default.taskmanager | CKV_K8S_14 | 3 |
+| `k8s/insecure-pod.yaml` | Pod.default.insecure-app | CKV_K8S_18 | 3 |
+| `k8s/deployment.yaml` | Pod.default.taskmanager.app-taskmanager | CKV2_K8S_6 | 3 |
 
 #### Dockerfile
 
-| Recurso | Vulnerabilidad (Check ID) | Línea |
-|---|---|---|
-| /Dockerfile.EXPOSE | CKV_DOCKER_1 | 22 |
-| /Dockerfile. | CKV_DOCKER_3 | 1 |
+| Archivo | Recurso | Vulnerabilidad (Check ID) | Línea |
+|---|---|---|---|
+| `Dockerfile` | /Dockerfile.EXPOSE | CKV_DOCKER_1 | 22 |
+| `Dockerfile` | /Dockerfile. | CKV_DOCKER_3 | 1 |
+| `Dockerfile.worker` | /Dockerfile.worker.FROM | CKV_DOCKER_7 | 1 |
+| `Dockerfile.worker` | /Dockerfile.worker. | CKV_DOCKER_2 | 1 |
+| `k8s/insecure-pod.yaml` | 4be16fa962e0608739c80c244f4f8ffe9d1a7142 | CKV_SECRET_6 | 47 |
+| `terraform/ec2.tf` | 892a6ffafdfb0255bab8a35c5dd8f64630276e8b | CKV_SECRET_2 | 76 |
 
 #### GitHub Actions
 
 > **Nota de Seguridad:** El workflow `.github/workflows/security.yml` presenta la vulnerabilidad **CKV_GHA_7**, que advierte sobre el uso de `workflow_dispatch` con `inputs`. Esto podría permitir a un usuario con permisos de escritura manipular los parámetros del pipeline. Aunque es un riesgo de seguridad, se ha mantenido intencionadamente en este repositorio de prueba para demostrar la detección de malas configuraciones en pipelines CI/CD. En un entorno de producción, se recomienda eliminar los `inputs` o implementar validaciones estrictas.
 
-| Recurso | Vulnerabilidad (Check ID) | Línea |
-|---|---|---|
-| on(Security Pipeline) | CKV_GHA_7 | 3 |
+| Archivo | Recurso | Vulnerabilidad (Check ID) | Línea |
+|---|---|---|---|
+| `.github/workflows/security.yml` | on(Security Pipeline) | CKV_GHA_7 | 3 |
 
 ### 5. Container - Imagen Vulnerable (Trivy)
 
@@ -235,6 +308,12 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 | `Dockerfile` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "API_KEY" in ARG | 13 |
 | `Dockerfile` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "AWS_ACCESS_KEY_ID" in ENV | 18 |
 | `Dockerfile` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "SECRET_KEY" in ENV | 17 |
+| `Dockerfile.worker` | dockerfile | DS002 | HIGH | Specify at least 1 USER command in Dockerfile with non-root user as argument | 1 |
+| `Dockerfile.worker` | dockerfile | DS029 | HIGH | '--no-install-recommends' flag is missed: 'apt-get update &&     apt-get install -y     curl     wget     telnet     netcat     nmap     ssh     vim     sudo' | 16 |
+| `Dockerfile.worker` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "ENCRYPTION_KEY" in ENV | 13 |
+| `Dockerfile.worker` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "JWT_SIGNING_KEY" in ENV | 12 |
+| `Dockerfile.worker` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "MYSQL_ROOT_PASSWORD" in ENV | 10 |
+| `Dockerfile.worker` | dockerfile | DS031 | CRITICAL | Possible exposure of secret env "REDIS_PASSWORD" in ENV | 11 |
 | `k8s/deployment.yaml` | kubernetes | KSV005 | HIGH | Container 'taskmanager' of Deployment 'taskmanager' should not include 'SYS_ADMIN' in 'securityContext.capabilities.add' | 23 |
 | `k8s/deployment.yaml` | kubernetes | KSV006 | HIGH | Deployment 'taskmanager' should not specify '/var/run/docker.socker' in 'spec.template.volumes.hostPath.path' | 10 |
 | `k8s/deployment.yaml` | kubernetes | KSV009 | HIGH | Deployment 'taskmanager' should not set 'spec.template.spec.hostNetwork' to true | 10 |
@@ -242,6 +321,14 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 | `k8s/deployment.yaml` | kubernetes | KSV014 | HIGH | Container 'taskmanager' of Deployment 'taskmanager' should set 'securityContext.readOnlyRootFilesystem' to true | 23 |
 | `k8s/deployment.yaml` | kubernetes | KSV017 | HIGH | Container 'taskmanager' of Deployment 'taskmanager' should set 'securityContext.privileged' to false | 23 |
 | `k8s/deployment.yaml` | kubernetes | KSV118 | HIGH | deployment taskmanager in default namespace is using the default security context, which allows root privileges | 19 |
+| `k8s/insecure-pod.yaml` | kubernetes | KSV005 | HIGH | Container 'app' of Pod 'insecure-app' should not include 'SYS_ADMIN' in 'securityContext.capabilities.add' | 21 |
+| `k8s/insecure-pod.yaml` | kubernetes | KSV006 | HIGH | Pod 'insecure-app' should not specify '/var/run/docker.socker' in 'spec.template.volumes.hostPath.path' | 9 |
+| `k8s/insecure-pod.yaml` | kubernetes | KSV008 | HIGH | Pod 'insecure-app' should not set 'spec.template.spec.hostIPC' to true | 9 |
+| `k8s/insecure-pod.yaml` | kubernetes | KSV009 | HIGH | Pod 'insecure-app' should not set 'spec.template.spec.hostNetwork' to true | 9 |
+| `k8s/insecure-pod.yaml` | kubernetes | KSV010 | HIGH | Pod 'insecure-app' should not set 'spec.template.spec.hostPID' to true | 9 |
+| `k8s/insecure-pod.yaml` | kubernetes | KSV014 | HIGH | Container 'app' of Pod 'insecure-app' should set 'securityContext.readOnlyRootFilesystem' to true | 21 |
+| `k8s/insecure-pod.yaml` | kubernetes | KSV017 | HIGH | Container 'app' of Pod 'insecure-app' should set 'securityContext.privileged' to false | 21 |
+| `k8s/insecure-pod.yaml` | kubernetes | KSV121 | HIGH | pod insecure-app in default namespace shouldn't have volumes set to {"/", "/etc"} | 9 |
 | `terraform/ec2.tf` | terraform | AVD-AWS-0028 | HIGH | Instance does not require IMDS access to require a token. | 52 |
 | `terraform/ec2.tf` | terraform | aws-autoscaling-no-public-ip | CRITICAL | Sensitive data found in instance user data: Password literal text | 74 |
 | `terraform/ec2.tf` | terraform | aws-vpc-no-public-egress-sgr | CRITICAL | Security group rule allows unrestricted egress to any IP address. | 42 |
