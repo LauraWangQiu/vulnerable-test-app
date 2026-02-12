@@ -51,6 +51,7 @@ on:
 permissions:
   contents: read
   security-events: write
+  pull-requests: write
 
 # ──────────────────────────────────────────────
 #  MANUAL / PR: Secrets
@@ -89,6 +90,8 @@ jobs:
         with:
           scan_mode: 'pr'
           base_ref: ${{ github.base_ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ──────────────────────────────────────────────
   #  MANUAL / PR: SAST
