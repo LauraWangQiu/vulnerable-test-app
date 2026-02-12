@@ -1,0 +1,45 @@
+# Worker Dockerfile
+# WARNING: Test file with container misconfigurations
+
+# VULN: Using latest tag (unpinned version)
+FROM ubuntu:latest
+
+# VULN: Root user (no USER instruction)
+
+# VULN: Hardcoded secrets in ENV
+ENV MYSQL_ROOT_PASSWORD=root123
+ENV REDIS_PASSWORD=redis_secret_pass
+ENV JWT_SIGNING_KEY=my-jwt-signing-key-123
+ENV ENCRYPTION_KEY=aes256-encryption-key-here
+
+# VULN: Installing unnecessary packages and not cleaning up
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    wget \
+    telnet \
+    netcat \
+    nmap \
+    ssh \
+    vim \
+    sudo
+
+# VULN: Downloading scripts without verification
+RUN curl -sL https://example.com/install.sh | bash
+
+# VULN: Adding user to sudoers (privilege escalation)
+RUN useradd -m worker && \
+    echo "worker ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# VULN: COPY with broad permissions
+COPY --chmod=777 . /app
+
+WORKDIR /app
+
+# VULN: Running as root, exposed ports
+EXPOSE 3306
+EXPOSE 6379
+EXPOSE 22
+
+# VULN: Shell form CMD (no signal handling)
+CMD python worker.py
