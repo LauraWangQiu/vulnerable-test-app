@@ -7,6 +7,9 @@ Flask==1.0.0
 # Template engine - CVE-2019-10906 (Sandbox escape)
 Jinja2==2.10
 
+# Pinned to keep compatibility with Jinja2 2.10 (soft_unicode removed in 2.1.0)
+MarkupSafe==2.0.1
+
 # YAML parsing - CVE-2020-14343 (Arbitrary code execution)
 PyYAML==5.1
 

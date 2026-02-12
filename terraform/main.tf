@@ -45,5 +45,5 @@ variable "db_password" {
   description = "Database password"
   type        = string
   # VULN: Default password in variable (CKV_AWS_79)
-  default     = "SuperSecretPass123"
+  default     = "APR6L2qvsO0enQleMu9g7ur17Pa2zkRB0iU5BAzgjDE="
 }

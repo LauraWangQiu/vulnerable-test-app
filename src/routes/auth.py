@@ -6,7 +6,7 @@ import hashlib
 import jwt
 
 # VULN: Hardcoded JWT secret (Semgrep: hardcoded-credentials)
-JWT_SECRET = "super-secret-jwt-key-2024"
+JWT_SECRET = "ys47UNkD7JOLr7CiBXVVpddopaMny0okmPBgyrHnAPo="
 
 auth_bp = Blueprint('auth', __name__)
 

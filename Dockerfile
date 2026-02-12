@@ -6,16 +6,16 @@ FROM python:3.8-slim
 
 # VULN: Labels with sensitive information
 LABEL maintainer="admin@taskmanager.com"
-LABEL db_password="this_is_not_a_password"
+LABEL db_password="TYQOJ1QPert8qRJQ3V8h9uq3Ive/PGdWKSpputHoS9g="
 
 # VULN: Secrets in ARG (visible in docker history)
-ARG DB_PASSWORD=SuperSecretPass123
+ARG DB_PASSWORD=APR6L2qvsO0enQleMu9g7ur17Pa2zkRB0iU5BAzgjDE=
 ARG API_KEY=sk_live_xxxxxxxxxxxx
 
 # VULN: Environment variables with secrets
-ENV DATABASE_URL=postgresql://admin:password123@db:5432/taskmanager
-ENV SECRET_KEY=super-secret-key-not-for-production
-ENV AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+ENV DATABASE_URL=postgresql://admin:APR6L2qvsO0enQleMu9g7ur17Pa2zkRB0iU5BAzgjDE=@db:5432/taskmanager
+ENV SECRET_KEY=paTNmWjkwS0RPFt0gx8WWQFktk0nWeFAu2rR53fSRX8=
+ENV AWS_ACCESS_KEY_ID=AKIA5BASP7JHE3IHXA7R
 
 # VULN: Runs as root (no USER instruction)
 # Should have:

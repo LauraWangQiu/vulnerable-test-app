@@ -15,7 +15,7 @@ DATABASE_CONFIG = {
     "port": 5432,
     "database": "taskmanager",
     "user": "admin",
-    "password": "SuperSecretP@ssw0rd123!"  # VULN: Hardcoded password
+    "password": "8vV2bPfboY1BRpu/eyzQnsZ8hY7x2Gg0NX0l9dHpMAc="  # VULN: Hardcoded password
 }
 
 # VULN: Hardcoded API Keys

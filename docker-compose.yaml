@@ -12,8 +12,8 @@ services:
       - "22:22"  # VULN: SSH exposed
     environment:
       # VULN: Secrets in plain text (CKV_DOCKER_COMPOSE_xxx)
-      - DATABASE_URL=postgresql://admin:SuperSecretPass123@db:5432/taskmanager
-      - SECRET_KEY=super-secret-key-change-me
+      - DATABASE_URL=postgresql://admin:APR6L2qvsO0enQleMu9g7ur17Pa2zkRB0iU5BAzgjDE=@db:5432/taskmanager
+      - SECRET_KEY=paTNmWjkwS0RPFt0gx8WWQFktk0nWeFAu2rR53fSRX8=
       - AWS_ACCESS_KEY_ID=AKIA5BASP7JHE3IHXA7R
       - AWS_SECRET_ACCESS_KEY=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
       - DEBUG=true
@@ -38,7 +38,7 @@ services:
     environment:
       # VULN: Hardcoded credentials
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: SuperSecretPass123
+      POSTGRES_PASSWORD: APR6L2qvsO0enQleMu9g7ur17Pa2zkRB0iU5BAzgjDE=
       POSTGRES_DB: taskmanager
     ports:
       # VULN: DB exposed to host
@@ -52,7 +52,7 @@ services:
   redis:
     image: redis:6-alpine
     container_name: taskmanager-redis
-    command: redis-server --requirepass RedisP@ss123
+    command: redis-server --requirepass mAzay7YhVQWH/I6k7aXxJ0u9G7XWYraeLKrCo+OAIo0=
     ports:
       # VULN: Redis exposed
       - "6379:6379"

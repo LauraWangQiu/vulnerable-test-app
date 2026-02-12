@@ -73,7 +73,7 @@ resource "aws_instance" "web" {
   # VULN: User data with secrets (CKV_AWS_46)
   user_data = <<-EOF
     #!/bin/bash
-    export DB_PASSWORD="SuperSecretPass123"
+    export DB_PASSWORD="APR6L2qvsO0enQleMu9g7ur17Pa2zkRB0iU5BAzgjDE="
     export API_KEY="sk_live_xxxxx"
     docker run -e DB_PASSWORD=$DB_PASSWORD taskmanager:latest
   EOF

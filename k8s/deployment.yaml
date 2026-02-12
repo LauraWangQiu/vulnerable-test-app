@@ -62,11 +62,11 @@ spec:
         env:
         # VULN: Secrets in plain environment variables (CKV_K8S_35)
         - name: DATABASE_PASSWORD
-          value: "SuperSecretPass123"  # VULN: Should use secretRef
+          value: "APR6L2qvsO0enQleMu9g7ur17Pa2zkRB0iU5BAzgjDE="  # VULN: Should use secretRef
         - name: API_KEY
           value: "sk_live_xxxxxxxxxxxx"  # VULN: Hardcoded secret
         - name: JWT_SECRET
-          value: "my-jwt-secret-key"
+          value: "ys47UNkD7JOLr7CiBXVVpddopaMny0okmPBgyrHnAPo="
         
         # Sin health checks (CKV_K8S_8, CKV_K8S_9)
         # livenessProbe: ...

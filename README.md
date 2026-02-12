@@ -33,8 +33,11 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 | `Dockerfile` | DB_PASSWORD en ARG | 12 |
 | `Dockerfile` | AWS_ACCESS_KEY_ID en ENV | 17 |
 | `docker-compose.yaml` | AWS credentials en environment | 17-18 |
-| `docker-compose.yaml` | POSTGRES_PASSWORD hardcodeado | 42 |
+| `docker-compose.yaml` | POSTGRES_PASSWORD hardcodeado | 41 |
 | `terraform/ec2.tf` | Secrets en user_data | 76-77 |
+| `.env.example` | Environment template containing multiple secrets (API keys, tokens, secrets) | 8-11-14-43-44 |
+| `k8s/deployment.yaml` | Kubernetes manifest with embedded secrets (Stripe, env vars) | 60-80 |
+| `src/templates/task.html` | Template containing a hardcoded Stripe key | 88 |
 
 ### 2. SAST - Código Vulnerable (Semgrep)
 
@@ -159,7 +162,7 @@ Ejecutando los scanners deberías obtener aproximadamente:
 
 | Scanner | Findings |
 |---------|----------|
-| **Secrets** | ~16 |
+| **Secrets** | ~25 |
 | **SAST** | ~26 |
 | **SCA** | ~37 |
 | **IaC** | ~77 |
@@ -265,7 +268,7 @@ Repository: .
   1. SECRETS SCAN (Gitleaks)
 ==========================================
 [*] Running Secrets scanner...
-[✓] Secrets: 16 findings → results-secret.sarif
+[✓] Secrets: 25 findings → results-secret.sarif
 
 ==========================================
   2. SAST SCAN (Semgrep)
@@ -283,7 +286,7 @@ Repository: .
   results-iac.sarif: 77 findings
   results-sast.sarif: 26 findings
   results-sca.sarif: 37 findings
-  results-secret.sarif: 16 findings
+  results-secret.sarif: 25 findings
 
 Test complete!
 ```
@@ -326,7 +329,7 @@ Starting scanners...
 
 🔍 Running Gitleaks...
 ...
-Secrets: 16 findings → results-secret.sarif
+Secrets: 25 findings → results-secret.sarif
 
 ==> Running SAST scanner (image: cicd-sast-scanner)
 ...
@@ -337,7 +340,7 @@ Summary:
   results-iac.sarif: 77 findings
   results-sast.sarif: 26 findings
   results-sca.sarif: 37 findings
-  results-secret.sarif: 16 findings
+  results-secret.sarif: 25 findings
 
 All done. SARIF files saved to C:\Users\Laura\Documents\GitHub\vulnerable-test-app
 ```
