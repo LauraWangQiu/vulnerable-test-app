@@ -3,10 +3,17 @@
 # Two trigger modes:
 #   1. workflow_dispatch (manual): Run any combination of scanners on the full repository
 #   2. pull_request (automatic):   PR-scoped scans — all scanners run only on changed files
+#
+# Each scanner supports a "tool" input to select the underlying engine:
+#   - secrets:    gitleaks (default), trufflehog
+#   - sast:       semgrep (default), bandit
+#   - sca:        trivy (default), grype
+#   - iac:        checkov (default), trivy
+#   - containers: trivy (default), grype
 name: Security Pipeline
 
 on:
-  # Manual trigger — select which scanners to run
+  # Manual trigger — select which scanners and tools to run
   workflow_dispatch:
     inputs:
       scan_secrets:
@@ -14,6 +21,14 @@ on:
         required: false
         default: true
         type: boolean
+      secrets_tool:
+        description: 'Secret scanner tool'
+        required: false
+        default: 'gitleaks'
+        type: choice
+        options:
+          - gitleaks
+          - trufflehog
       secrets_mode:
         description: 'Secret scan mode (only if scan_secrets is true)'
         required: false
@@ -28,21 +43,53 @@ on:
         required: false
         default: true
         type: boolean
+      sast_tool:
+        description: 'SAST scanner tool'
+        required: false
+        default: 'semgrep'
+        type: choice
+        options:
+          - semgrep
+          - bandit
       scan_sca:
         description: 'Run SCA scan'
         required: false
         default: true
         type: boolean
+      sca_tool:
+        description: 'SCA scanner tool'
+        required: false
+        default: 'trivy'
+        type: choice
+        options:
+          - trivy
+          - grype
       scan_iac:
         description: 'Run IaC scan'
         required: false
         default: true
         type: boolean
+      iac_tool:
+        description: 'IaC scanner tool'
+        required: false
+        default: 'checkov'
+        type: choice
+        options:
+          - checkov
+          - trivy
       scan_containers:
         description: 'Run Container scan'
         required: false
         default: true
         type: boolean
+      containers_tool:
+        description: 'Container scanner tool'
+        required: false
+        default: 'trivy'
+        type: choice
+        options:
+          - trivy
+          - grype
 
   # Automatic on PRs to master
   pull_request:
@@ -67,6 +114,7 @@ jobs:
     steps:
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
         with:
+          tool: ${{ inputs.secrets_tool }}
           scan_mode: 'files'
 
   secrets-full-scan-history:
@@ -79,6 +127,7 @@ jobs:
     steps:
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
         with:
+          tool: ${{ inputs.secrets_tool }}
           scan_mode: 'history'
 
   secrets-pr-scan:
@@ -105,6 +154,7 @@ jobs:
     steps:
       - uses: LauraWangQiu/cicd-security-scanner/sast@main
         with:
+          tool: ${{ inputs.sast_tool }}
           config: 'auto'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -124,6 +174,7 @@ jobs:
     steps:
       - uses: LauraWangQiu/cicd-security-scanner/sca@main
         with:
+          tool: ${{ inputs.sca_tool }}
           severity: 'HIGH,CRITICAL'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -143,6 +194,7 @@ jobs:
     steps:
       - uses: LauraWangQiu/cicd-security-scanner/iac@main
         with:
+          tool: ${{ inputs.iac_tool }}
           framework: 'all'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -162,6 +214,7 @@ jobs:
     steps:
       - uses: LauraWangQiu/cicd-security-scanner/containers@main
         with:
+          tool: ${{ inputs.containers_tool }}
           severity: 'HIGH,CRITICAL'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
