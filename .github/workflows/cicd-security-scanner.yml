@@ -44,9 +44,9 @@ on:
         default: true
         type: boolean
 
-  # Automatic on PRs to main
+  # Automatic on PRs to master
   pull_request:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: read
