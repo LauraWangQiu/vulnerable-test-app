@@ -1,3 +1,8 @@
+# Example workflow using all CICD Security Scanner modules
+#
+# Two trigger modes:
+#   1. workflow_dispatch (manual): Run any combination of scanners on the full repository
+#   2. pull_request (automatic):   PR-scoped scans — all scanners run only on changed files
 name: Security Pipeline
 
 on:
@@ -98,6 +103,8 @@ jobs:
       - uses: LauraWangQiu/cicd-security-scanner/sast@main
         with:
           config: 'auto'
+          scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
+          base_ref: ${{ github.base_ref }}
           fail_on_findings: 'true'
 
   # ──────────────────────────────────────────────
@@ -110,35 +117,11 @@ jobs:
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Detect changed dependency files (PR only)
-        id: dep_changes
-        if: github.event_name == 'pull_request'
-        run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
-            'requirements*.txt' 'Pipfile*' 'poetry.lock' 'pyproject.toml' \
-            'package.json' 'package-lock.json' 'yarn.lock' 'pnpm-lock.yaml' \
-            'go.sum' 'go.mod' 'Gemfile.lock' 'Cargo.lock' 'composer.lock' \
-            '*.csproj' '*.sln' || true)
-          if [ -n "$CHANGED" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "📦 Dependency files changed:"
-            echo "$CHANGED"
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No dependency files changed in this PR — skipping SCA"
-          fi
-
-      - name: Run SCA scanning
-        if: >-
-          github.event_name == 'workflow_dispatch' ||
-          steps.dep_changes.outputs.changed == 'true'
-        uses: LauraWangQiu/cicd-security-scanner/sca@main
+      - uses: LauraWangQiu/cicd-security-scanner/sca@main
         with:
           severity: 'HIGH,CRITICAL'
+          scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
+          base_ref: ${{ github.base_ref }}
           fail_on_vulnerabilities: 'true'
 
   # ──────────────────────────────────────────────
@@ -154,6 +137,8 @@ jobs:
       - uses: LauraWangQiu/cicd-security-scanner/iac@main
         with:
           framework: 'all'
+          scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
+          base_ref: ${{ github.base_ref }}
           fail_on_findings: 'true'
 
   # ──────────────────────────────────────────────
@@ -169,6 +154,8 @@ jobs:
       - uses: LauraWangQiu/cicd-security-scanner/containers@main
         with:
           severity: 'HIGH,CRITICAL'
+          scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
+          base_ref: ${{ github.base_ref }}
           fail_on_vulnerabilities: 'true'
 
   # ──────────────────────────────────────────────
