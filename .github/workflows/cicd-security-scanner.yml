@@ -364,8 +364,12 @@ jobs:
           mkdir -p sarif-results
           for img in $IMAGES; do
             saname=$(echo "$img" | tr '/:' '__')
-            echo "Scanning $img -> results-container-${saname}.sarif"
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${GITHUB_WORKSPACE}:/workdir" anchore/grype:latest "$img" -o sarif > "${GITHUB_WORKSPACE}/results-container-${saname}.sarif" || true
+            tarpath="${{ runner.temp }}/image-${saname}.tar"
+            echo "Saving $img -> $tarpath"
+            docker save -o "$tarpath" "$img"
+            echo "Scanning $img (archive) -> results-container-${saname}.sarif"
+            docker run --rm -v "${GITHUB_WORKSPACE}:/workdir" -v "$tarpath:$tarpath" anchore/grype:latest "docker-archive:$tarpath" -o sarif > "${GITHUB_WORKSPACE}/results-container-${saname}.sarif" || true
+            rm -f "$tarpath"
           done
 
       - name: Run container scanner (non-Grype)
