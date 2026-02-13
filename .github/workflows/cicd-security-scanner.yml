@@ -332,58 +332,7 @@ jobs:
             }
             core.setOutput('tool', tool || '');
 
-      - name: Build images for container scan (all Dockerfiles)
-        if: ${{ (github.event_name == 'pull_request' && steps.pr_labels.outputs.tool == 'grype') || (github.event_name == 'workflow_dispatch' && inputs.containers_tool == 'grype') }}
-        run: |
-          set -euo pipefail
-          echo "Searching for Dockerfiles..."
-          # Normalize the repository name to a lowercase, safe form for image tags
-          repo="${GITHUB_REPOSITORY:-${{ github.repository }}}"
-          repo_lc=$(echo "$repo" | tr '[:upper:]' '[:lower:]')
-          repo_safe=$(echo "$repo_lc" | sed 's/[^a-z0-9_.\/\-]/_/g')
-          mapfile -t files < <(git ls-files -- "**/Dockerfile*" || true)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No Dockerfiles found; building root Dockerfile if present"
-            if [ -f Dockerfile ]; then
-              files=("Dockerfile")
-            fi
-          fi
-          i=0
-          IMAGES=""
-          for df in "${files[@]}"; do
-            i=$((i+1))
-            if [ "${{ github.event_name }}" = "pull_request" ]; then
-              tag="${repo_safe}:pr-${{ github.event.pull_request.number }}-${i}"
-            else
-              tag="${repo_safe}:manual-${{ github.run_id }}-${i}"
-            fi
-            context="$(dirname "$df")"
-            if [ "$context" = "." ]; then context="."; fi
-            echo "Building $df (context: $context) -> $tag"
-            docker build -f "$df" -t "$tag" "$context"
-            IMAGES="$IMAGES $tag"
-          done
-          # strip leading space
-          IMAGES="$(echo "$IMAGES" | sed 's/^ //')"
-          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
-
-      - name: Scan built images with Grype
-        if: ${{ (github.event_name == 'pull_request' && steps.pr_labels.outputs.tool == 'grype') || (github.event_name == 'workflow_dispatch' && inputs.containers_tool == 'grype') }}
-        run: |
-          set -euo pipefail
-          echo "Scanning images: $IMAGES"
-          for img in $IMAGES; do
-            saname=$(echo "$img" | tr '/:' '__')
-            echo "Scanning $img -> results-container-${saname}.sarif (debug -> grype-${saname}.log)"
-            # Run grype with timeout and capture debug output to a log file
-            timeout 600s grype "$img" -o sarif --debug > "results-container-${saname}.sarif" 2> "grype-${saname}.log" || echo "grype exited non-zero or timed out; see grype-${saname}.log"
-          done
-
-      - name: Run container scanner (non-Grype)
-        if: >-
-          (github.event_name == 'pull_request' && steps.pr_labels.outputs.tool != 'grype') ||
-          (github.event_name == 'workflow_dispatch' && inputs.containers_tool != 'grype')
-        uses: LauraWangQiu/cicd-security-scanner/containers@main
+      - uses: LauraWangQiu/cicd-security-scanner/containers@main
         with:
           tool: ${{ steps.pr_labels.outputs.tool || inputs.containers_tool }}
           severity: 'HIGH,CRITICAL'
