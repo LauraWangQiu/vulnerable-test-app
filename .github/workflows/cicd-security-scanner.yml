@@ -372,17 +372,11 @@ jobs:
         run: |
           set -euo pipefail
           echo "Scanning images: $IMAGES"
-          mkdir -p sarif-results
-          i=0
           for img in $IMAGES; do
-            i=$((i+1))
             saname=$(echo "$img" | tr '/:' '__')
-            tarpath="${{ runner.temp }}/image-${saname}.tar"
-            echo "Saving $img -> $tarpath"
-            docker save -o "$tarpath" "$img"
-            echo "Scanning $img (archive) -> results-container-${saname}.sarif"
-            docker run --rm -v "${GITHUB_WORKSPACE}:/workdir" -v "$tarpath:$tarpath" anchore/grype:latest "docker-archive:$tarpath" -o sarif > "${GITHUB_WORKSPACE}/results-container-${saname}.sarif" || true
-            rm -f "$tarpath"
+            echo "Scanning $img -> results-container-${saname}.sarif (debug -> grype-${saname}.log)"
+            # Run grype with timeout and capture debug output to a log file
+            timeout 600s grype "$img" -o sarif --debug > "results-container-${saname}.sarif" 2> "grype-${saname}.log" || echo "grype exited non-zero or timed out; see grype-${saname}.log"
           done
 
       - name: Run container scanner (non-Grype)
