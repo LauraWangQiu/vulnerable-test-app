@@ -325,7 +325,54 @@ jobs:
             }
             core.setOutput('tool', tool || '');
 
-      - uses: LauraWangQiu/cicd-security-scanner/containers@main
+      - name: Build images for container scan (all Dockerfiles)
+        if: ${{ (github.event_name == 'pull_request' && steps.pr_labels.outputs.tool == 'grype') || (github.event_name == 'workflow_dispatch' && inputs.containers_tool == 'grype') }}
+        run: |
+          set -euo pipefail
+          echo "Searching for Dockerfiles..."
+          mapfile -t files < <(git ls-files -- "**/Dockerfile*" || true)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No Dockerfiles found; building root Dockerfile if present"
+            if [ -f Dockerfile ]; then
+              files=("Dockerfile")
+            fi
+          fi
+          i=0
+          IMAGES=""
+          for df in "${files[@]}"; do
+            i=$((i+1))
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              tag="${{ github.repository }}:pr-${{ github.event.pull_request.number }}-${i}"
+            else
+              tag="${{ github.repository }}:manual-${{ github.run_id }}-${i}"
+            fi
+            context="$(dirname "$df")"
+            if [ "$context" = "." ]; then context="."; fi
+            echo "Building $df (context: $context) -> $tag"
+            docker build -f "$df" -t "$tag" "$context"
+            IMAGES="$IMAGES $tag"
+          done
+          # strip leading space
+          IMAGES="$(echo "$IMAGES" | sed 's/^ //')"
+          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
+
+      - name: Scan built images with Grype
+        if: ${{ (github.event_name == 'pull_request' && steps.pr_labels.outputs.tool == 'grype') || (github.event_name == 'workflow_dispatch' && inputs.containers_tool == 'grype') }}
+        run: |
+          set -euo pipefail
+          echo "Scanning images: $IMAGES"
+          mkdir -p sarif-results
+          for img in $IMAGES; do
+            saname=$(echo "$img" | tr '/:' '__')
+            echo "Scanning $img -> results-container-${saname}.sarif"
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${GITHUB_WORKSPACE}:/workdir" anchore/grype:latest "$img" -o sarif > "${GITHUB_WORKSPACE}/results-container-${saname}.sarif" || true
+          done
+
+      - name: Run container scanner (non-Grype)
+        if: >-
+          (github.event_name == 'pull_request' && steps.pr_labels.outputs.tool != 'grype') ||
+          (github.event_name == 'workflow_dispatch' && inputs.containers_tool != 'grype')
+        uses: LauraWangQiu/cicd-security-scanner/containers@main
         with:
           tool: ${{ steps.pr_labels.outputs.tool || inputs.containers_tool }}
           severity: 'HIGH,CRITICAL'
