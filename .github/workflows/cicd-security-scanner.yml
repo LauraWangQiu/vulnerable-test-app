@@ -132,6 +132,8 @@ jobs:
         with:
           tool: ${{ steps.pr_labels.outputs.tool || inputs.secrets_tool }}
           scan_mode: 'files'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   secrets-full-scan-history:
     name: 🔐 Secrets – Full Repo (history)
@@ -142,8 +144,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Get PR label override for Secrets (history)
         if: ${{ github.event_name == 'pull_request' }}
         id: pr_labels
@@ -163,6 +163,8 @@ jobs:
         with:
           tool: ${{ steps.pr_labels.outputs.tool || inputs.secrets_tool }}
           scan_mode: 'history'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   secrets-pr-scan:
     name: 🔐 Secrets – PR Diff
@@ -170,8 +172,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Get PR label override for Secrets (PR)
         if: ${{ github.event_name == 'pull_request' }}
         id: pr_labels
@@ -334,6 +334,10 @@ jobs:
         run: |
           set -euo pipefail
           echo "Searching for Dockerfiles..."
+          # Normalize the repository name to a lowercase, safe form for image tags
+          repo="${GITHUB_REPOSITORY:-${{ github.repository }}}"
+          repo_lc=$(echo "$repo" | tr '[:upper:]' '[:lower:]')
+          repo_safe=$(echo "$repo_lc" | sed 's/[^a-z0-9_.\/\-]/_/g')
           mapfile -t files < <(git ls-files -- "**/Dockerfile*" || true)
           if [ ${#files[@]} -eq 0 ]; then
             echo "No Dockerfiles found; building root Dockerfile if present"
@@ -346,9 +350,9 @@ jobs:
           for df in "${files[@]}"; do
             i=$((i+1))
             if [ "${{ github.event_name }}" = "pull_request" ]; then
-              tag="${{ github.repository }}:pr-${{ github.event.pull_request.number }}-${i}"
+              tag="${repo_safe}:pr-${{ github.event.pull_request.number }}-${i}"
             else
-              tag="${{ github.repository }}:manual-${{ github.run_id }}-${i}"
+              tag="${repo_safe}:manual-${{ github.run_id }}-${i}"
             fi
             context="$(dirname "$df")"
             if [ "$context" = "." ]; then context="."; fi
@@ -366,7 +370,9 @@ jobs:
           set -euo pipefail
           echo "Scanning images: $IMAGES"
           mkdir -p sarif-results
+          i=0
           for img in $IMAGES; do
+            i=$((i+1))
             saname=$(echo "$img" | tr '/:' '__')
             tarpath="${{ runner.temp }}/image-${saname}.tar"
             echo "Saving $img -> $tarpath"
