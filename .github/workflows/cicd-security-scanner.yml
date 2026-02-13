@@ -1,19 +1,19 @@
-# Example workflow using all CICD Security Scanner modules
+# CI/CD Security Pipeline — all scanner modules
 #
-# Two trigger modes:
-#   1. workflow_dispatch (manual): Run any combination of scanners on the full repository
-#   2. pull_request (automatic):   PR-scoped scans — all scanners run only on changed files
+# Triggers:
+#   workflow_dispatch  → manual, full-repo scans (select scanners & tools)
+#   pull_request       → automatic PR-scoped scans on all scanners
 #
-# Each scanner supports a "tool" input to select the underlying engine:
-#   - secrets:    gitleaks (default), trufflehog
-#   - sast:       semgrep (default), bandit
-#   - sca:        trivy (default), grype
-#   - iac:        checkov (default), trivy
-#   - containers: trivy (default), grype
+# Tool defaults:
+#   secrets: gitleaks | trufflehog      sast: semgrep | bandit
+#   sca:     trivy    | grype           iac:  checkov | trivy
+#   containers: trivy | grype
+#
+# Override tool per PR with labels:  scan:<scanner>=<tool>
+#   e.g.  scan:sast=bandit   scan:containers=grype
 name: Security Pipeline
 
 on:
-  # Manual trigger — select which scanners and tools to run
   workflow_dispatch:
     inputs:
       scan_secrets:
@@ -26,18 +26,13 @@ on:
         required: false
         default: 'gitleaks'
         type: choice
-        options:
-          - gitleaks
-          - trufflehog
+        options: [gitleaks, trufflehog]
       secrets_mode:
-        description: 'Secret scan mode (only if scan_secrets is true)'
+        description: 'Secret scan mode'
         required: false
         default: 'all'
         type: choice
-        options:
-          - all       # Both files and history
-          - files     # Current files only
-          - history   # Git commit history only
+        options: [all, files, history]
       scan_sast:
         description: 'Run SAST scan'
         required: false
@@ -48,9 +43,7 @@ on:
         required: false
         default: 'semgrep'
         type: choice
-        options:
-          - semgrep
-          - bandit
+        options: [semgrep, bandit]
       scan_sca:
         description: 'Run SCA scan'
         required: false
@@ -61,9 +54,7 @@ on:
         required: false
         default: 'trivy'
         type: choice
-        options:
-          - trivy
-          - grype
+        options: [trivy, grype]
       scan_iac:
         description: 'Run IaC scan'
         required: false
@@ -74,9 +65,7 @@ on:
         required: false
         default: 'checkov'
         type: choice
-        options:
-          - checkov
-          - trivy
+        options: [checkov, trivy]
       scan_containers:
         description: 'Run Container scan'
         required: false
@@ -87,11 +76,8 @@ on:
         required: false
         default: 'trivy'
         type: choice
-        options:
-          - trivy
-          - grype
+        options: [trivy, grype]
 
-  # Automatic on PRs to master
   pull_request:
     branches: [master]
 
@@ -100,10 +86,36 @@ permissions:
   security-events: write
   pull-requests: write
 
-# ──────────────────────────────────────────────
-#  MANUAL / PR: Secrets
-# ──────────────────────────────────────────────
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 jobs:
+
+  # ── Read all scan:<scanner>=<tool> labels once ─────────────
+  detect-overrides:
+    name: 🏷️ Detect PR Label Overrides
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      secrets:    ${{ steps.labels.outputs.secrets }}
+      sast:       ${{ steps.labels.outputs.sast }}
+      sca:        ${{ steps.labels.outputs.sca }}
+      iac:        ${{ steps.labels.outputs.iac }}
+      containers: ${{ steps.labels.outputs.containers }}
+    steps:
+      - id: labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number
+            });
+            for (const scanner of ['secrets', 'sast', 'sca', 'iac', 'containers']) {
+              const match = labels.find(l => new RegExp(`^scan:${scanner}=(.+)$`, 'i').test(l.name));
+              core.setOutput(scanner, match ? match.name.split('=')[1].trim() : '');
+            }
+
+  # ── Secrets (workflow_dispatch only: files) ────────────────
   secrets-full-scan-files:
     name: 🔐 Secrets – Full Repo (files)
     if: >-
@@ -113,29 +125,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get PR label override for Secrets
-        if: ${{ github.event_name == 'pull_request' }}
-        id: pr_labels
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue_number = context.payload.pull_request.number;
-            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
-            let tool = '';
-            for (const l of labels.data) {
-              const m = l.name.match(/^scan:secrets=(.+)$/i);
-              if (m) { tool = m[1].trim(); break; }
-            }
-            core.setOutput('tool', tool || '');
-
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
         with:
-          tool: ${{ steps.pr_labels.outputs.tool || inputs.secrets_tool }}
+          tool: ${{ inputs.secrets_tool }}
           scan_mode: 'files'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
 
+  # ── Secrets (workflow_dispatch only: history) ──────────────
   secrets-full-scan-history:
     name: 🔐 Secrets – Full Repo (history)
     if: >-
@@ -145,88 +143,45 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get PR label override for Secrets (history)
-        if: ${{ github.event_name == 'pull_request' }}
-        id: pr_labels
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue_number = context.payload.pull_request.number;
-            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
-            let tool = '';
-            for (const l of labels.data) {
-              const m = l.name.match(/^scan:secrets=(.+)$/i);
-              if (m) { tool = m[1].trim(); break; }
-            }
-            core.setOutput('tool', tool || '');
-
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
         with:
-          tool: ${{ steps.pr_labels.outputs.tool || inputs.secrets_tool }}
+          tool: ${{ inputs.secrets_tool }}
           scan_mode: 'history'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
 
+  # ── Secrets (PR only) ──────────────────────────────────────
   secrets-pr-scan:
     name: 🔐 Secrets – PR Diff
     if: github.event_name == 'pull_request'
+    needs: [detect-overrides]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get PR label override for Secrets (PR)
-        if: ${{ github.event_name == 'pull_request' }}
-        id: pr_labels
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue_number = context.payload.pull_request.number;
-            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
-            let tool = '';
-            for (const l of labels.data) {
-              const m = l.name.match(/^scan:secrets=(.+)$/i);
-              if (m) { tool = m[1].trim(); break; }
-            }
-            core.setOutput('tool', tool || '');
-
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
         with:
-          tool: ${{ steps.pr_labels.outputs.tool || 'gitleaks' }}
+          tool: ${{ needs.detect-overrides.outputs.secrets }}
           scan_mode: 'pr'
           base_ref: ${{ github.base_ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
 
-  # ──────────────────────────────────────────────
-  #  MANUAL / PR: SAST
-  # ──────────────────────────────────────────────
+  # ── SAST ───────────────────────────────────────────────────
   sast-scan:
     name: 🔍 SAST – Static Code Analysis
+    needs: [detect-overrides]
     if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.scan_sast == true) ||
-      github.event_name == 'pull_request'
+      !failure() &&
+      ((github.event_name == 'workflow_dispatch' && inputs.scan_sast == true) ||
+       github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get PR label override for SAST
-        if: ${{ github.event_name == 'pull_request' }}
-        id: pr_labels
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue_number = context.payload.pull_request.number;
-            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
-            let tool = '';
-            for (const l of labels.data) {
-              const m = l.name.match(/^scan:sast=(.+)$/i);
-              if (m) { tool = m[1].trim(); break; }
-            }
-            core.setOutput('tool', tool || '');
-
       - uses: LauraWangQiu/cicd-security-scanner/sast@main
         with:
-          tool: ${{ steps.pr_labels.outputs.tool || inputs.sast_tool }}
+          tool: ${{ needs.detect-overrides.outputs.sast || inputs.sast_tool }}
           config: 'auto'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -234,35 +189,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ──────────────────────────────────────────────
-  #  MANUAL / PR: SCA
-  # ──────────────────────────────────────────────
+  # ── SCA ────────────────────────────────────────────────────
   sca-scan:
     name: 📦 SCA – Dependency Scan
+    needs: [detect-overrides]
     if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.scan_sca == true) ||
-      github.event_name == 'pull_request'
+      !failure() &&
+      ((github.event_name == 'workflow_dispatch' && inputs.scan_sca == true) ||
+       github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get PR label override for SCA
-        if: ${{ github.event_name == 'pull_request' }}
-        id: pr_labels
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue_number = context.payload.pull_request.number;
-            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
-            let tool = '';
-            for (const l of labels.data) {
-              const m = l.name.match(/^scan:sca=(.+)$/i);
-              if (m) { tool = m[1].trim(); break; }
-            }
-            core.setOutput('tool', tool || '');
-
       - uses: LauraWangQiu/cicd-security-scanner/sca@main
         with:
-          tool: ${{ steps.pr_labels.outputs.tool || inputs.sca_tool }}
+          tool: ${{ needs.detect-overrides.outputs.sca || inputs.sca_tool }}
           severity: 'HIGH,CRITICAL'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -270,35 +210,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ──────────────────────────────────────────────
-  #  MANUAL / PR: IaC
-  # ──────────────────────────────────────────────
+  # ── IaC ────────────────────────────────────────────────────
   iac-scan:
     name: 🏗️ IaC – Infrastructure as Code
+    needs: [detect-overrides]
     if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.scan_iac == true) ||
-      github.event_name == 'pull_request'
+      !failure() &&
+      ((github.event_name == 'workflow_dispatch' && inputs.scan_iac == true) ||
+       github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get PR label override for IaC
-        if: ${{ github.event_name == 'pull_request' }}
-        id: pr_labels
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue_number = context.payload.pull_request.number;
-            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
-            let tool = '';
-            for (const l of labels.data) {
-              const m = l.name.match(/^scan:iac=(.+)$/i);
-              if (m) { tool = m[1].trim(); break; }
-            }
-            core.setOutput('tool', tool || '');
-
       - uses: LauraWangQiu/cicd-security-scanner/iac@main
         with:
-          tool: ${{ steps.pr_labels.outputs.tool || inputs.iac_tool }}
+          tool: ${{ needs.detect-overrides.outputs.iac || inputs.iac_tool }}
           framework: 'all'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -306,35 +231,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ──────────────────────────────────────────────
-  #  MANUAL / PR: Container
-  # ──────────────────────────────────────────────
+  # ── Containers ─────────────────────────────────────────────
   container-scan:
-    name: 🐳 Container – Dockerfile Scan
+    name: 🐳 Container – Image Scan
+    needs: [detect-overrides]
     if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.scan_containers == true) ||
-      github.event_name == 'pull_request'
+      !failure() &&
+      ((github.event_name == 'workflow_dispatch' && inputs.scan_containers == true) ||
+       github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get PR label override for Containers
-        if: ${{ github.event_name == 'pull_request' }}
-        id: pr_labels
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue_number = context.payload.pull_request.number;
-            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
-            let tool = '';
-            for (const l of labels.data) {
-              const m = l.name.match(/^scan:containers=(.+)$/i);
-              if (m) { tool = m[1].trim(); break; }
-            }
-            core.setOutput('tool', tool || '');
-
       - uses: LauraWangQiu/cicd-security-scanner/containers@main
         with:
-          tool: ${{ steps.pr_labels.outputs.tool || inputs.containers_tool }}
+          tool: ${{ needs.detect-overrides.outputs.containers || inputs.containers_tool }}
           severity: 'HIGH,CRITICAL'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -342,13 +252,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ──────────────────────────────────────────────
-  #  Security Gate — all selected scans must pass
-  # ──────────────────────────────────────────────
+  # ── Security Gate ──────────────────────────────────────────
   security-gate:
     name: 🚦 Security Gate
     if: always()
-    needs: [secrets-full-scan-files, secrets-full-scan-history, secrets-pr-scan, sca-scan, sast-scan, iac-scan, container-scan]
+    needs:
+      - secrets-full-scan-files
+      - secrets-full-scan-history
+      - secrets-pr-scan
+      - sast-scan
+      - sca-scan
+      - iac-scan
+      - container-scan
     runs-on: ubuntu-latest
     steps:
       - name: Check all scans passed
@@ -362,7 +277,6 @@ jobs:
             "${{ needs.sast-scan.result }}" \
             "${{ needs.iac-scan.result }}" \
             "${{ needs.container-scan.result }}"; do
-            # Only count "failure" — skip "skipped" jobs (not selected or not triggered)
             if [ "$result" == "failure" ]; then FAILED=true; fi
           done
           if [ "$FAILED" == "true" ]; then
