@@ -134,6 +134,7 @@ jobs:
           scan_mode: 'files'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
   secrets-full-scan-history:
     name: 🔐 Secrets – Full Repo (history)
@@ -165,6 +166,7 @@ jobs:
           scan_mode: 'history'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
   secrets-pr-scan:
     name: 🔐 Secrets – PR Diff
@@ -194,6 +196,7 @@ jobs:
           base_ref: ${{ github.base_ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
   # ──────────────────────────────────────────────
   #  MANUAL / PR: SAST
