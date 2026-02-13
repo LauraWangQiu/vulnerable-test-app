@@ -293,7 +293,7 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 
 #### GitHub Actions
 
-> **Nota de Seguridad:** El workflow `.github/workflows/security.yml` presenta la vulnerabilidad **CKV_GHA_7**, que advierte sobre el uso de `workflow_dispatch` con `inputs`. Esto podría permitir a un usuario con permisos de escritura manipular los parámetros del pipeline. Aunque es un riesgo de seguridad, se ha mantenido intencionadamente en este repositorio de prueba para demostrar la detección de malas configuraciones en pipelines CI/CD. En un entorno de producción, se recomienda eliminar los `inputs` o implementar validaciones estrictas.
+> **Nota de Seguridad:** El workflow `.github/workflows/cicd-security-scanner.yml` presenta la vulnerabilidad **CKV_GHA_7**, que advierte sobre el uso de `workflow_dispatch` con `inputs`. Esto podría permitir a un usuario con permisos de escritura manipular los parámetros del pipeline. Aunque es un riesgo de seguridad, se ha mantenido intencionadamente en este repositorio de prueba para demostrar la detección de malas configuraciones en pipelines CI/CD. En un entorno de producción, se recomienda eliminar los `inputs` o implementar validaciones estrictas.
 
 | Archivo | Recurso | Vulnerabilidad (Check ID) | Línea |
 |---|---|---|---|
@@ -355,7 +355,7 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 
 ## 📊 Resultados Esperados
 
-Ejecutando los scanners deberías obtener aproximadamente:
+Ejecutando los scanners (default) deberías obtener aproximadamente:
 
 | Scanner | Findings |
 |---------|----------|
@@ -363,7 +363,7 @@ Ejecutando los scanners deberías obtener aproximadamente:
 | **SAST** | ~26 |
 | **SCA** | ~37 |
 | **IaC** | ~79 |
-| **Container** | ~34 |
+| **Container** | ~33 |
 
 ---
 
@@ -453,41 +453,6 @@ chmod +x test-scanners.sh
 ./test-scanners.sh /path/to/repo
 ```
 
-**Salida esperada:**
-```
-==========================================
-  Security Scanner Test Suite
-==========================================
-
-Repository: .
-
-==========================================
-  1. SECRETS SCAN (Gitleaks)
-==========================================
-[*] Running Secrets scanner...
-[✓] Secrets: 25 findings → results-secret.sarif
-
-==========================================
-  2. SAST SCAN (Semgrep)
-==========================================
-[*] Running SAST scanner...
-[✓] SAST: 26 findings → results-sast.sarif
-
-...
-
-==========================================
-  SUMMARY
-==========================================
-
-  results-container.sarif: 34 findings
-  results-iac.sarif: 79 findings
-  results-sast.sarif: 26 findings
-  results-sca.sarif: 37 findings
-  results-secret.sarif: 25 findings
-
-Test complete!
-```
-
 #### Troubleshooting Linux/macOS
 
 Si ves errores de sintaxis o `$'\r': command not found`:
@@ -517,29 +482,50 @@ chmod +x test-scanners.sh
 .\test-scanners.ps1 -RepoPath "C:\path\to\repo"
 ```
 
-**Salida esperada:**
+### Salida esperada
+
 ```
 Repository: C:\Users\Laura\Documents\GitHub\vulnerable-test-app
 Starting scanners...
 
+Select tool for Secrets:
+
+  1) gitleaks
+  2) trufflehog
+  0) Use default (gitleaks)
+Choice [enter=default]: 
+
 ==> Running Secrets scanner (image: cicd-secret-scanner)
 
-🔍 Running Gitleaks...
+🔐 Secret Scanner
+   Tool: gitleaks
+   Mode: files
+[*] Tool: Gitleaks
+[*] Scanning current files on disk...
 ...
-Secrets: 25 findings → results-secret.sarif
+[OK] Secrets: 29 findings -> results-secret.sarif
+
+Select tool for SAST:
+
+  1) semgrep
+  2) bandit
+  0) Use default (semgrep)
+Choice [enter=default]:
 
 ==> Running SAST scanner (image: cicd-sast-scanner)
 ...
 
-Summary:
+========================================== 
+  SUMMARY
+========================================== 
 
-  results-container.sarif: 34 findings
+  results-container.sarif: 33 findings
   results-iac.sarif: 79 findings
   results-sast.sarif: 26 findings
   results-sca.sarif: 37 findings
-  results-secret.sarif: 25 findings
+  results-secret.sarif: 25 findings        
 
-All done. SARIF files saved to C:\Users\Laura\Documents\GitHub\vulnerable-test-app
+Test complete!
 ```
 
 #### Troubleshooting Windows
@@ -550,6 +536,18 @@ Si ves caracteres extraños (ƒôè, Ô£à, etc.):
 # Establecer encoding UTF-8 antes de ejecutar
 chcp 65001
 .\test-scanners.ps1
+```
+
+---
+
+### Selección de herramienta (breve)
+
+Los scripts `test-scanners.sh` y `test-scanners.ps1` permiten elegir la herramienta de escaneo (por ejemplo `gitleaks`, `trufflehog`, `semgrep`, `bandit`, `trivy`, `grype`, `checkov`). Si prefieres evitar prompts o seleccionar una herramienta explícita, ejecuta el contenedor pasando la variable de entorno `TOOL` con `docker run`.
+
+Ejemplo:
+
+```bash
+docker run --rm -v $(pwd):/scan -e TOOL=trufflehog cicd-secret-scanner
 ```
 
 ---
