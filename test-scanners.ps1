@@ -43,7 +43,7 @@ if ($Build) {
     Build-Image -tag 'cicd-container-scanner' -relPath 'cicd-security-scanner\containers'
 }
 
-function Run-Scanner([string]$name, [string]$image, [string]$outputFile, [string]$extraArgs) {
+function Run-Scanner([string]$name, [string]$image, [string]$outputFile, $extraArgs) {
     Write-Info "`n==> Running $name scanner (image: $image)`n"
 
     $tmp = Join-Path $RepoPath 'results.sarif'
@@ -51,7 +51,18 @@ function Run-Scanner([string]$name, [string]$image, [string]$outputFile, [string
 
     $vol = "${RepoPath}:/scan"
     $cmd = @('run','--rm','-v',$vol)
-    if ($extraArgs) { $cmd += $extraArgs }
+    if ($extraArgs) {
+        if ($extraArgs -is [string]) {
+            $tokens = $extraArgs -split '\s+'
+            $cmd += $tokens
+        }
+        elseif ($extraArgs -is [System.Array]) {
+            $cmd += $extraArgs
+        }
+        else {
+            $cmd += $extraArgs.ToString()
+        }
+    }
     $cmd += $image
 
     # Run docker and capture output to avoid PowerShell throwing NativeCommandError
@@ -71,20 +82,54 @@ function Run-Scanner([string]$name, [string]$image, [string]$outputFile, [string
             Write-Warn "Failed to parse $dest as JSON"
             $count = 0
         }
-        Write-Ok ("{0}: {1} findings → {2}" -f $name, $count, $outputFile)
+        Write-Host ("[OK] {0}: {1} findings -> {2}" -f $name, $count, $outputFile) -ForegroundColor Green
     }
     else {
-        Write-Warn ("{0}: no results.sarif produced" -f $name)
+        Write-Host ("[FAIL] {0}: no results generated" -f $name) -ForegroundColor Red
     }
 }
 
 Write-Info "Starting scanners..."
 
-Run-Scanner -name 'Secrets' -image 'cicd-secret-scanner' -outputFile 'results-secret.sarif' -extraArgs ''
-Run-Scanner -name 'SAST' -image 'cicd-sast-scanner' -outputFile 'results-sast.sarif' -extraArgs ''
-Run-Scanner -name 'SCA' -image 'cicd-sca-scanner' -outputFile 'results-sca.sarif' -extraArgs ''
-Run-Scanner -name 'IaC' -image 'cicd-iac-scanner' -outputFile 'results-iac.sarif' -extraArgs ''
-Run-Scanner -name 'Containers' -image 'cicd-container-scanner' -outputFile 'results-container.sarif' -extraArgs ''
+function Choose-Tool([string]$Name, [string[]]$Options, [string]$Default) {
+    # Interactive selection of tool; returns selected tool string
+    try {
+        if (-not [System.Environment]::UserInteractive) { return $Default }
+    } catch {
+        return $Default
+    }
+
+    Write-Host "`nSelect tool for ${Name}:`n"
+    for ($i = 0; $i -lt $Options.Length; $i++) {
+        Write-Host "  $($i+1)) $($Options[$i])"
+    }
+    Write-Host "  0) Use default ($Default)"
+
+    $choice = Read-Host "Choice [enter=default]"
+    if ([string]::IsNullOrWhiteSpace($choice)) { return $Default }
+    if ($choice -eq '0') { return $Default }
+    $ok = [int]::TryParse($choice,[ref]$null)
+    if ($ok -and [int]$choice -ge 1 -and [int]$choice -le $Options.Length) {
+        return $Options[[int]$choice - 1]
+    }
+    Write-Warn "Invalid choice, using default $Default"
+    return $Default
+}
+
+$toolSecrets = Choose-Tool 'Secrets' @('gitleaks','trufflehog') 'gitleaks'
+Run-Scanner -name 'Secrets' -image 'cicd-secret-scanner' -outputFile 'results-secret.sarif' -extraArgs @('-e', "TOOL=$toolSecrets")
+
+$toolSast = Choose-Tool 'SAST' @('semgrep','bandit') 'semgrep'
+Run-Scanner -name 'SAST' -image 'cicd-sast-scanner' -outputFile 'results-sast.sarif' -extraArgs @('-e', "TOOL=$toolSast")
+
+$toolSca = Choose-Tool 'SCA' @('trivy','grype') 'trivy'
+Run-Scanner -name 'SCA' -image 'cicd-sca-scanner' -outputFile 'results-sca.sarif' -extraArgs @('-e', "TOOL=$toolSca")
+
+$toolIac = Choose-Tool 'IaC' @('checkov','trivy') 'checkov'
+Run-Scanner -name 'IaC' -image 'cicd-iac-scanner' -outputFile 'results-iac.sarif' -extraArgs @('-e', "TOOL=$toolIac")
+
+$toolCont = Choose-Tool 'Containers' @('trivy','grype') 'trivy'
+Run-Scanner -name 'Containers' -image 'cicd-container-scanner' -outputFile 'results-container.sarif' -extraArgs @('-e', "TOOL=$toolCont")
 
 Write-Host "=========================================="
 Write-Host "  SUMMARY"
@@ -94,7 +139,10 @@ Get-ChildItem -Path $RepoPath -Filter 'results-*.sarif' | ForEach-Object {
     $f = $_.FullName
     try { $j = Get-Content $f -Raw | ConvertFrom-Json -ErrorAction Stop; $c = 0; if ($j.runs -and $j.runs.Count -gt 0 -and $j.runs[0].results) { $c = ($j.runs[0].results | Measure-Object).Count } }
     catch { $c = 0 }
-    Write-Host "  $($_.Name): $c findings"
+    # Print filename in green, the rest in default color
+    Write-Host -NoNewline "  "
+    Write-Host -NoNewline -ForegroundColor Green "$($_.Name)"
+    Write-Host ": $c findings"
 }
 
 Write-Ok "`nTest complete!`n"

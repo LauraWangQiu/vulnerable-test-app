@@ -5,19 +5,19 @@
 set -euo pipefail
 
 REPO_PATH="${1:-.}"
+# Normalize to absolute path so output matches PowerShell style
+REPO_PATH="$(cd "$REPO_PATH" && pwd -P)"
 OUTPUT_DIR="${REPO_PATH}"
 
-echo "=========================================="
-echo "  Security Scanner Test Suite"
-echo "=========================================="
-echo
-echo "Repository: $REPO_PATH"
+printf "%b" "\033[0;36mRepository: $REPO_PATH\033[0m\n"
+printf "%b" "\033[0;36mStarting scanners...\033[0m\n"
 echo
 
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 run_scanner() {
@@ -26,7 +26,6 @@ run_scanner() {
     output_file=$3
     extra_args=$4
 
-    printf "%b" "${YELLOW}[*] Running ${scanner_name} scanner...${NC}\n"
 
     # Remove stale result
     rm -f "$REPO_PATH/results.sarif"
@@ -46,30 +45,96 @@ run_scanner() {
     echo
 }
 
-echo "=========================================="
-echo "  1. SECRETS SCAN (Gitleaks)"
-echo "=========================================="
-run_scanner "Secrets" "cicd-secret-scanner" "results-secret.sarif" ""
+display_pre_run() {
+    local scanner="$1"
+    local tool="$2"
+    case "$scanner" in
+        Secrets|SAST|SCA|IaC|Containers)
+            printf "${CYAN}\n==> Running %s scanner (image: %s)\n\n${NC}" "$scanner" "cicd-${scanner,,}-scanner"
+            ;;
+        *)
+            printf "\n==> Running %s scanner (image: %s)\n\n" "$scanner" "$scanner"
+            ;;
+    esac
+}
 
-echo "=========================================="
-echo "  2. SAST SCAN (Semgrep)"
-echo "=========================================="
-run_scanner "SAST" "cicd-sast-scanner" "results-sast.sarif" ""
+choose_tool() {
+    local label="$1"; shift
+    local default="$1"; shift
+    local opts=("$@")
 
-echo "=========================================="
-echo "  3. SCA SCAN (Trivy - Dependencies)"
-echo "=========================================="
-run_scanner "SCA" "cicd-sca-scanner" "results-sca.sarif" ""
+    # Non-interactive -> return default
+    # If no tty and no /dev/tty, return default
+    if [ ! -t 0 ] && [ ! -e /dev/tty ]; then
+        echo "$default"
+        return
+    fi
 
-echo "=========================================="
-echo "  4. IAC SCAN (Checkov)"
-echo "=========================================="
-run_scanner "IaC" "cicd-iac-scanner" "results-iac.sarif" ""
+    # Choose appropriate io device (prefer /dev/tty when present)
+    local out=/dev/stdout
+    local in=/dev/stdin
+    if [ -e /dev/tty ]; then
+        out=/dev/tty
+        in=/dev/tty
+    fi
 
-echo "=========================================="
-echo "  5. CONTAINER SCAN (Trivy - Dockerfiles)"
-echo "=========================================="
-run_scanner "Containers" "cicd-container-scanner" "results-container.sarif" ""
+    printf "Select tool for %s:\n" "$label" > "$out"
+    local i=1
+    for o in "${opts[@]}"; do
+        printf "  %d) %s\n" "$i" "$o" > "$out"
+        i=$((i+1))
+    done
+    printf "  0) Use default (%s)\n" "$default" > "$out"
+
+    while true; do
+        # Read from chosen input device so prompt appears in interactive consoles
+        if read -r -p "Choice [enter=default]: " choice < "$in"; then
+            :
+        else
+            echo "$default"
+            return
+        fi
+        if [ -z "$choice" ]; then
+            echo "$default"
+            return
+        fi
+        if [[ "$choice" =~ ^[0-9]+$ ]]; then
+            if [ "$choice" -eq 0 ]; then
+                echo "$default"
+                return
+            elif [ "$choice" -ge 1 ] && [ "$choice" -le ${#opts[@]} ]; then
+                echo "${opts[$((choice-1))]}"
+                return
+            fi
+        fi
+        printf "Invalid choice. Try again.\n" > "$out"
+    done
+}
+
+TOOL_SECRETS=$(choose_tool "Secrets" "gitleaks" "gitleaks" "trufflehog")
+EXTRA_SECRETS="-e TOOL=${TOOL_SECRETS}"
+display_pre_run "Secrets" "$TOOL_SECRETS"
+run_scanner "Secrets" "cicd-secret-scanner" "results-secret.sarif" "$EXTRA_SECRETS"
+
+TOOL_SAST=$(choose_tool "SAST" "semgrep" "semgrep" "bandit")
+EXTRA_SAST="-e TOOL=${TOOL_SAST}"
+display_pre_run "SAST" "$TOOL_SAST"
+run_scanner "SAST" "cicd-sast-scanner" "results-sast.sarif" "$EXTRA_SAST"
+
+TOOL_SCA=$(choose_tool "SCA" "trivy" "trivy" "grype")
+EXTRA_SCA="-e TOOL=${TOOL_SCA}"
+display_pre_run "SCA" "$TOOL_SCA"
+run_scanner "SCA" "cicd-sca-scanner" "results-sca.sarif" "$EXTRA_SCA"
+
+TOOL_IAC=$(choose_tool "IaC" "checkov" "checkov" "trivy")
+EXTRA_IAC="-e TOOL=${TOOL_IAC}"
+display_pre_run "IaC" "$TOOL_IAC"
+run_scanner "IaC" "cicd-iac-scanner" "results-iac.sarif" "$EXTRA_IAC"
+
+TOOL_CONT=$(choose_tool "Containers" "trivy" "trivy" "grype")
+EXTRA_CONT="-e TOOL=${TOOL_CONT}"
+display_pre_run "Containers" "$TOOL_CONT"
+run_scanner "Containers" "cicd-container-scanner" "results-container.sarif" "$EXTRA_CONT"
 
 echo "=========================================="
 echo "  SUMMARY"
