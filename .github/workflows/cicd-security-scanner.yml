@@ -112,9 +112,26 @@ jobs:
       (inputs.secrets_mode == 'all' || inputs.secrets_mode == 'files')
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Get PR label override for Secrets
+        if: ${{ github.event_name == 'pull_request' }}
+        id: pr_labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
+            let tool = '';
+            for (const l of labels.data) {
+              const m = l.name.match(/^scan:secrets=(.+)$/i);
+              if (m) { tool = m[1].trim(); break; }
+            }
+            const core = require('@actions/core');
+            core.setOutput('tool', tool || '');
+
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
         with:
-          tool: ${{ inputs.secrets_tool }}
+          tool: ${{ steps.pr_labels.outputs.tool || inputs.secrets_tool }}
           scan_mode: 'files'
 
   secrets-full-scan-history:
@@ -125,9 +142,26 @@ jobs:
       (inputs.secrets_mode == 'all' || inputs.secrets_mode == 'history')
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Get PR label override for Secrets (history)
+        if: ${{ github.event_name == 'pull_request' }}
+        id: pr_labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
+            let tool = '';
+            for (const l of labels.data) {
+              const m = l.name.match(/^scan:secrets=(.+)$/i);
+              if (m) { tool = m[1].trim(); break; }
+            }
+            const core = require('@actions/core');
+            core.setOutput('tool', tool || '');
+
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
         with:
-          tool: ${{ inputs.secrets_tool }}
+          tool: ${{ steps.pr_labels.outputs.tool || inputs.secrets_tool }}
           scan_mode: 'history'
 
   secrets-pr-scan:
@@ -135,8 +169,26 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Get PR label override for Secrets (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        id: pr_labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
+            let tool = '';
+            for (const l of labels.data) {
+              const m = l.name.match(/^scan:secrets=(.+)$/i);
+              if (m) { tool = m[1].trim(); break; }
+            }
+            const core = require('@actions/core');
+            core.setOutput('tool', tool || '');
+
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
         with:
+          tool: ${{ steps.pr_labels.outputs.tool || 'gitleaks' }}
           scan_mode: 'pr'
           base_ref: ${{ github.base_ref }}
         env:
@@ -152,9 +204,26 @@ jobs:
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Get PR label override for SAST
+        if: ${{ github.event_name == 'pull_request' }}
+        id: pr_labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
+            let tool = '';
+            for (const l of labels.data) {
+              const m = l.name.match(/^scan:sast=(.+)$/i);
+              if (m) { tool = m[1].trim(); break; }
+            }
+            const core = require('@actions/core');
+            core.setOutput('tool', tool || '');
+
       - uses: LauraWangQiu/cicd-security-scanner/sast@main
         with:
-          tool: ${{ inputs.sast_tool }}
+          tool: ${{ steps.pr_labels.outputs.tool || inputs.sast_tool }}
           config: 'auto'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -172,9 +241,26 @@ jobs:
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Get PR label override for SCA
+        if: ${{ github.event_name == 'pull_request' }}
+        id: pr_labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
+            let tool = '';
+            for (const l of labels.data) {
+              const m = l.name.match(/^scan:sca=(.+)$/i);
+              if (m) { tool = m[1].trim(); break; }
+            }
+            const core = require('@actions/core');
+            core.setOutput('tool', tool || '');
+
       - uses: LauraWangQiu/cicd-security-scanner/sca@main
         with:
-          tool: ${{ inputs.sca_tool }}
+          tool: ${{ steps.pr_labels.outputs.tool || inputs.sca_tool }}
           severity: 'HIGH,CRITICAL'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -192,9 +278,26 @@ jobs:
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Get PR label override for IaC
+        if: ${{ github.event_name == 'pull_request' }}
+        id: pr_labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
+            let tool = '';
+            for (const l of labels.data) {
+              const m = l.name.match(/^scan:iac=(.+)$/i);
+              if (m) { tool = m[1].trim(); break; }
+            }
+            const core = require('@actions/core');
+            core.setOutput('tool', tool || '');
+
       - uses: LauraWangQiu/cicd-security-scanner/iac@main
         with:
-          tool: ${{ inputs.iac_tool }}
+          tool: ${{ steps.pr_labels.outputs.tool || inputs.iac_tool }}
           framework: 'all'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
@@ -212,9 +315,26 @@ jobs:
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Get PR label override for Containers
+        if: ${{ github.event_name == 'pull_request' }}
+        id: pr_labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const labels = await github.rest.issues.listLabelsOnIssue({ owner: context.repo.owner, repo: context.repo.repo, issue_number });
+            let tool = '';
+            for (const l of labels.data) {
+              const m = l.name.match(/^scan:containers=(.+)$/i);
+              if (m) { tool = m[1].trim(); break; }
+            }
+            const core = require('@actions/core');
+            core.setOutput('tool', tool || '');
+
       - uses: LauraWangQiu/cicd-security-scanner/containers@main
         with:
-          tool: ${{ inputs.containers_tool }}
+          tool: ${{ steps.pr_labels.outputs.tool || inputs.containers_tool }}
           severity: 'HIGH,CRITICAL'
           scan_mode: ${{ github.event_name == 'pull_request' && 'pr' || 'full' }}
           base_ref: ${{ github.base_ref }}
