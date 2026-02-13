@@ -126,7 +126,6 @@ jobs:
               const m = l.name.match(/^scan:secrets=(.+)$/i);
               if (m) { tool = m[1].trim(); break; }
             }
-            const core = require('@actions/core');
             core.setOutput('tool', tool || '');
 
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
@@ -156,7 +155,6 @@ jobs:
               const m = l.name.match(/^scan:secrets=(.+)$/i);
               if (m) { tool = m[1].trim(); break; }
             }
-            const core = require('@actions/core');
             core.setOutput('tool', tool || '');
 
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
@@ -183,7 +181,6 @@ jobs:
               const m = l.name.match(/^scan:secrets=(.+)$/i);
               if (m) { tool = m[1].trim(); break; }
             }
-            const core = require('@actions/core');
             core.setOutput('tool', tool || '');
 
       - uses: LauraWangQiu/cicd-security-scanner/secrets@main
@@ -218,7 +215,6 @@ jobs:
               const m = l.name.match(/^scan:sast=(.+)$/i);
               if (m) { tool = m[1].trim(); break; }
             }
-            const core = require('@actions/core');
             core.setOutput('tool', tool || '');
 
       - uses: LauraWangQiu/cicd-security-scanner/sast@main
@@ -255,7 +251,6 @@ jobs:
               const m = l.name.match(/^scan:sca=(.+)$/i);
               if (m) { tool = m[1].trim(); break; }
             }
-            const core = require('@actions/core');
             core.setOutput('tool', tool || '');
 
       - uses: LauraWangQiu/cicd-security-scanner/sca@main
@@ -292,7 +287,6 @@ jobs:
               const m = l.name.match(/^scan:iac=(.+)$/i);
               if (m) { tool = m[1].trim(); break; }
             }
-            const core = require('@actions/core');
             core.setOutput('tool', tool || '');
 
       - uses: LauraWangQiu/cicd-security-scanner/iac@main
@@ -329,7 +323,6 @@ jobs:
               const m = l.name.match(/^scan:containers=(.+)$/i);
               if (m) { tool = m[1].trim(); break; }
             }
-            const core = require('@actions/core');
             core.setOutput('tool', tool || '');
 
       - uses: LauraWangQiu/cicd-security-scanner/containers@main
