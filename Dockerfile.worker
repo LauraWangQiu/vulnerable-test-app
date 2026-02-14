@@ -18,7 +18,7 @@ RUN apt-get update && \
     curl \
     wget \
     telnet \
-    netcat \
+    netcat-openbsd \
     nmap \
     ssh \
     vim \
