@@ -48,7 +48,8 @@ RUN useradd -m worker && \
     echo "worker ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # VULN: COPY with broad permissions
-COPY --chmod=777 . /app
+COPY . /app
+RUN chmod -R 777 /app
 
 WORKDIR /app
 

@@ -52,5 +52,14 @@ cryptography==3.2
 # Gunicorn - CVE-2024-6827
 gunicorn==20.0.4
 
+# Werkzeug - CVE-2024-34069 (debugger RCE)
+werkzeug==2.3.0
+
+# setuptools - CVE-2024-6345 (RCE via download functions)
+setuptools==65.0.0
+
+# aiohttp - CVE-2024-23334 (directory traversal)
+aiohttp==3.9.0
+
 # Environment variables
 python-dotenv==0.19.0

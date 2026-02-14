@@ -148,6 +148,13 @@ Este repositorio contiene vulnerabilidades controladas para validar el funcionam
 | cryptography | 3.2 | CVE-2026-26007 | HIGH | 46.0.5 |
 | gunicorn | 20.0.4 | CVE-2024-1135 | HIGH | 22.0.0 |
 | gunicorn | 20.0.4 | CVE-2024-6827 | HIGH | 22.0.0 |
+| werkzeug | 2.3.0 | CVE-2024-34069 | HIGH | 3.0.3 |
+| setuptools | 65.0.0 | CVE-2022-40897 | HIGH | 65.5.1 |
+| setuptools | 65.0.0 | CVE-2024-6345 | HIGH | 70.0.0 |
+| setuptools | 65.0.0 | CVE-2025-47273 | HIGH | 78.1.1 |
+| aiohttp | 3.9.0 | CVE-2024-23334 | HIGH | 3.9.2 |
+| aiohttp | 3.9.0 | CVE-2024-30251 | HIGH | 3.9.4 |
+| aiohttp | 3.9.0 | CVE-2025-69223 | HIGH | 3.13.3 |
 
 #### Node.js (`package.json`)
 
