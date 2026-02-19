@@ -129,6 +129,7 @@ $toolIac = Choose-Tool 'IaC' @('checkov','trivy') 'checkov'
 Run-Scanner -name 'IaC' -image 'cicd-iac-scanner' -outputFile 'results-iac.sarif' -extraArgs @('-e', "TOOL=$toolIac")
 
 $toolCont = Choose-Tool 'Containers' @('trivy','grype') 'trivy'
+Run-Scanner -name 'Containers' -image 'cicd-container-scanner' -outputFile 'results-container.sarif' -extraArgs @('-e', "TOOL=$toolCont", '-v', '/var/run/docker.sock:/var/run/docker.sock')
 
 Write-Host "=========================================="
 Write-Host "  SUMMARY"
