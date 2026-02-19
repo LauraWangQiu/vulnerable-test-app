@@ -132,7 +132,6 @@ display_pre_run "IaC" "$TOOL_IAC"
 run_scanner "IaC" "cicd-iac-scanner" "results-iac.sarif" "$EXTRA_IAC"
 
 TOOL_CONT=$(choose_tool "Containers" "trivy" "trivy" "grype")
-EXTRA_CONT="-e TOOL=${TOOL_CONT}"
 display_pre_run "Containers" "$TOOL_CONT"
 run_scanner "Containers" "cicd-container-scanner" "results-container.sarif" "$EXTRA_CONT"
 
