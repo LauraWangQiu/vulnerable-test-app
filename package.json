@@ -20,7 +20,11 @@
     "handlebars": "4.5.0",
     "marked": "0.7.0",
     "underscore": "1.9.0",
-    "yargs-parser": "13.1.0"
+    "yargs-parser": "13.1.0",
+    "glob-parent": "5.1.1",
+    "path-parse": "1.0.6",
+    "json5": "1.0.1",
+    "semver": "6.3.0"
   },
   "devDependencies": {
     "webpack": "4.44.0",

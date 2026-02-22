@@ -1,0 +1,93 @@
+# Kubernetes Pod Configuration
+# WARNING: Test file with security misconfigurations
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: insecure-app
+  namespace: default
+spec:
+  # VULN: Running as root
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+  
+  # VULN: Host network access
+  hostNetwork: true
+  hostPID: true
+  hostIPC: true
+  
+  containers:
+  - name: app
+    image: myapp:latest
+    
+    # VULN: Privileged container
+    securityContext:
+      privileged: true
+      allowPrivilegeEscalation: true
+      runAsNonRoot: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        add:
+          - ALL
+          - NET_ADMIN
+          - SYS_ADMIN
+    
+    # VULN: No resource limits
+    # resources:
+    #   limits:
+    #     memory: "128Mi"
+    #     cpu: "500m"
+    
+    # VULN: Secrets in environment variables
+    env:
+    - name: DB_PASSWORD
+      value: "SuperSecretPassword123"
+    - name: API_KEY
+      value: "sk_live_xxxxxxxxxxxxx"
+    - name: AWS_SECRET_KEY
+      value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    
+    # VULN: Mounting sensitive host paths
+    volumeMounts:
+    - name: docker-socket
+      mountPath: /var/run/docker.sock
+    - name: etc-passwd
+      mountPath: /host-etc
+    - name: root-volume
+      mountPath: /host-root
+    
+    ports:
+    - containerPort: 80
+    - containerPort: 22  # VULN: SSH port exposed
+  
+  volumes:
+  # VULN: Docker socket mount
+  - name: docker-socket
+    hostPath:
+      path: /var/run/docker.sock
+  
+  # VULN: Sensitive host directory mount
+  - name: etc-passwd
+    hostPath:
+      path: /etc
+  
+  # VULN: Full host filesystem mount
+  - name: root-volume
+    hostPath:
+      path: /
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insecure-service
+spec:
+  type: LoadBalancer  # VULN: Exposed to internet without restrictions
+  selector:
+    app: insecure-app
+  ports:
+  - port: 80
+    targetPort: 80
+  - port: 22  # VULN: SSH exposed via LoadBalancer
+    targetPort: 22

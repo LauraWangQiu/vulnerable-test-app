@@ -1,0 +1,62 @@
+# Worker Dockerfile
+# WARNING: Test file with container misconfigurations
+
+# VULN: Using latest tag (unpinned version)
+FROM ubuntu:latest
+
+# VULN: Root user (no USER instruction)
+
+# VULN: Hardcoded secrets in ENV
+ENV MYSQL_ROOT_PASSWORD=root123
+ENV REDIS_PASSWORD=redis_secret_pass
+ENV JWT_SIGNING_KEY=my-jwt-signing-key-123
+ENV ENCRYPTION_KEY=aes256-encryption-key-here
+
+# VULN: Installing unnecessary packages and not cleaning up
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    wget \
+    telnet \
+    netcat-openbsd \
+    nmap \
+    ssh \
+    vim \
+    sudo
+
+# VULN: Downloading scripts without verification
+# Safer pattern: download to a file, validate it's a script, then execute.
+# Using example.com here will fetch an HTML page which will break 'bash -s',
+# so we avoid piping unknown content. Replace URL with a real installer or
+# include the installer in the repo.
+RUN set -eux; \
+    url="https://example.com/install.sh"; \
+    tmp=/tmp/install.sh; \
+    if curl -fsSL -o "$tmp" "$url"; then \
+        if grep -qE '^#!' "$tmp"; then \
+            chmod +x "$tmp"; "$tmp" || (echo "[!] installer failed" && exit 1); \
+        else \
+            echo "[!] downloaded content from $url did not look like a script; skipping"; \
+        fi; \
+        rm -f "$tmp"; \
+    else \
+        echo "[!] could not download $url; skipping"; \
+    fi
+
+# VULN: Adding user to sudoers (privilege escalation)
+RUN useradd -m worker && \
+    echo "worker ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# VULN: COPY with broad permissions
+COPY . /app
+RUN chmod -R 777 /app
+
+WORKDIR /app
+
+# VULN: Running as root, exposed ports
+EXPOSE 3306
+EXPOSE 6379
+EXPOSE 22
+
+# VULN: Shell form CMD (no signal handling)
+CMD python worker.py
